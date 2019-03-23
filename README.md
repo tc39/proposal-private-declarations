@@ -79,7 +79,7 @@ export class Templates {
   }
 }
 
-// The code priveledge to register templates with the shared class
+// The code privileged to register templates with the shared class
 // instance. Importing and using is statically analyzable, and must pass
 // a linter.
 export function registerExtendedTemplate() {
