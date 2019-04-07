@@ -1,6 +1,6 @@
 # Private Declarations
 
-A Stage 0 proposal to add Private Declarations, allowing trusted code
+A Stage 1 proposal to add Private Declarations, allowing trusted code
 _outside_ of the class lexical scope to access private state.
 
 ```js
