@@ -1,0 +1,22 @@
+<!doctype html>
+<meta charset="utf8">
+<!-- <link rel="stylesheet" href="./spec.css"> -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
+<!-- <script src="./spec.js"></script> -->
+<pre class="metadata">
+title: Private Declarations
+status: proposal
+stage: 1
+contributors: Justin Ridgewell
+location: https://tc39.es/proposal-private-declarations
+</pre>
+
+<emu-clause id="sec-scope">
+  <h1>Scope</h1>
+  <p>
+    This is the spec text of the <a href="https://github.com/tc39/proposal-private-declarations/">Private Declarations proposal</a> in ECMAScript.
+  </p>
+  <p>
+    TODO.
+  </p>
+</emu-clause>

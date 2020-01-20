@@ -1,18 +1,29 @@
 # Private Declarations
 
-A Stage 1 proposal to add Private Declarations, allowing trusted code
-_outside_ of the class lexical scope to access private state.
+A proposal to add Private Declarations, allowing trusted code _outside_ of the class lexical scope to access private state.
 
 ```js
 private #hello;
 class Example {
-  [#hello] = 'world!';
+  outer #hello = 'world!';
+
+  hello() {
+    return this.#hello;
+  }
 }
 
 const ex = new Example();
-console.log(ex.#hello);
-// => 'world!'
+console.log(ex.hello()); // => 'world!'
+console.log(ex.#hello); // => 'world!'
 ```
+
+## Champions
+
+- Justin Ridgewell ([@jridgewell](https://github.com/jridgewell/))
+
+## Status
+
+Current [Stage](https://tc39.es/process-document/): 1
 
 ## Guiding Use Cases
 
@@ -30,51 +41,51 @@ private #createPart;
 class AttributeCommitter {
   //...
 
-  [#createPart]() {
+  outer #createPart() {
     return new AttributePart(this);
   }
 }
 
 class PropertyCommitter extends AttributeCommitter {
-  [#createPart]() {
+  outer #createPart() {
     return new PropertyPart(this);
   }
 }
 ```
 
-Here, both `AttributeCommitter` explicitly allows trusted (written in
-the same source file) subclasses to override the behavior of the
-`#createPart` method. By default, a normal `AttributePart` is return.
+Here, `AttributeCommitter` explicitly allows trusted (written in the
+same source file) subclasses to override the behavior of the
+`#createPart` method. By default, a normal `AttributePart` is returned.
 But `PropertyCommitter` works only on properties and would return a
 `PropertyPart`. All other code is free to be inherited via normal
 publicly visible fields/methods from `AttributeCommitter`.
 
-**Note** that this does not privilege code outside the file to override the
-`#createPart` method, the `#createPart` declaration is visible only to
-the file.
+**Note** that this does not privilege code outside the file to override
+the `#createPart` method, as the `#createPart` private declaration is
+visible only in the scope where it is declared.
 
 ### Friend classes/functions
 
 For prior art in C++, see https://en.wikipedia.org/wiki/Friend_function.
 
 The AMP Project has a particular staged linting pattern that works well
-with friendly functions that guards access to restricted code. To begin
+with friendly functions that guard access to restricted code. To begin
 with, statically used functions are considerably easier to lint for than
 object-scoped method calls because we do not need to know the objects
-type to determine if this is a restricted call or just a non-restricted
-call that uses the same method name. Eg, it's easier to tell that a
-static export `registerExtendedTemplate` is restricted vs
-`obj.registerExtendedTemplate`.
+type. So its much easier to determine if this is a restricted call or
+just a non-restricted call that uses the same method name. Eg, it's
+easier to tell that a static export `registerExtendedTemplate` is
+restricted vs `obj.registerExtendedTemplate`.
 
 ```js
 // https://github.com/ampproject/amphtml/blob/18baa9da/src/service/template-impl.js
 
 private #registerTemplate;
 
-// Exported so that it may be intalled on the globally and shared
+// Exported so that it may be intalled on the global and shared
 // across split bundles.
 export class Templates {
-  [#registerTemplate]() {
+  outer #registerTemplate() {
     //...
   }
 }

@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "proposal-private-declarations",
+  "description": "A proposal to allow trusted code _outside_ of the class lexical scope to access private state",
+  "scripts": {
+    "build": "ecmarkup spec.emu index.html"
+  },
+  "homepage": "https://github.com/tc39/proposal-private-declarations#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tc39/proposal-private-declarations.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "ecmarkup": "^3.11.5"
+  }
+}
