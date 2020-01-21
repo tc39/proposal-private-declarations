@@ -17,6 +17,28 @@ console.log(ex.hello()); // => 'world!'
 console.log(ex.#hello); // => 'world!'
 ```
 
+This also allows us to bring private state to regular objects!
+
+```js
+private #hello;
+function Example() {
+  return {
+    outer #hello: 'world',
+
+    hello() {
+      return this.#hello;
+    }
+  }
+}
+
+const ex = Example();
+console.log(ex.hello()); // => 'world!'
+console.log(ex.#hello); // => 'world!'
+```
+
+Possible [later proposals](https://docs.google.com/presentation/d/1Zu9uCFMUU4zLwBVSd3OOxtsm-CYyYvJIryLVGW5leoA/edit#slide=id.g4d82425673_0_79)
+can allow sharing private declarations to friendly module.
+
 ## Champions
 
 - Justin Ridgewell ([@jridgewell](https://github.com/jridgewell/))
