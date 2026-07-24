@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<meta charset="utf8">
+<pre class="metadata">
+title: Proposal Private Declarations
+stage: 1
+contributors: Justin Ridgewell, Kevin Gibbons
+</pre>
+
+<div id="metadata-block">
+  <h1>Contributing to this Proposal</h1>
+  <p>You can discuss this proposal <a href="https://github.com/tc39/proposal-private-declarations/">on GitHub</a>.</p>
+</div>
+
+<emu-clause id="sec-new-clauses">
+  <h1>New Syntax</h1>
+
+  <emu-clause id="sec-private-declarations">
+    <h1>Private Declarations</h1>
+    <h2>Syntax</h2>
+    <emu-grammar type="definition">
+      <ins>PrivateDeclaration :
+        `private` PrivateIdentifier `;`</ins>
+    </emu-grammar>
+    <emu-grammar type="definition">
+      StatementListItem[Yield, Await, Return] :
+        Statement[?Yield, ?Await, ?Return]
+        Declaration[?Yield, ?Await]
+        <ins>PrivateDeclaration</ins>
+    </emu-grammar>
+
+    <emu-clause id="sec-private-declarations-static-semantics-early-errors">
+      <h1><ins>Static Semantics: Early Errors</ins></h1>
+      <emu-grammar>PrivateDeclaration : `private` PrivateIdentifier `;`</emu-grammar>
+      <ul>
+        <li>It is a Syntax Error if the StringValue of |PrivateIdentifier| is *"#constructor"*.</li>
+      </ul>
+      <emu-grammar>
+        StatementList :
+          StatementListItem
+          StatementList StatementListItem
+      </emu-grammar>
+      <ul>
+        <li>It is a Syntax Error if the PrivateBoundIdentifiers of this |StatementList| contains any duplicate entries.</li>
+      </ul>
+      <emu-grammar>
+        ModuleItemList :
+          ModuleItem
+          ModuleItemList ModuleItem
+      </emu-grammar>
+      <ul>
+        <li>It is a Syntax Error if the PrivateBoundIdentifiers of this |ModuleItemList| contains any duplicate entries.</li>
+      </ul>
+    </emu-clause>
+
+    <emu-clause id="sec-private-declarations-runtime-semantics-evaluation" type="sdo">
+      <h1><ins>Runtime Semantics: Evaluation</ins></h1>
+      <emu-grammar>PrivateDeclaration : `private` PrivateIdentifier `;`</emu-grammar>
+      <emu-alg>
+        1. Return ~empty~.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-objects">
+    <h1>Objects</h1>
+
+    <emu-clause id="sec-object-initializer-private-elements">
+      <h1>Object Initializer</h1>
+      <h2>Syntax</h2>
+      <emu-grammar type="definition">
+        PropertyDefinition[Yield, Await] :
+          IdentifierReference[?Yield, ?Await]
+          CoverInitializedName[?Yield, ?Await]
+          PropertyName[?Yield, ?Await] `:` AssignmentExpression[+In, ?Yield, ?Await]
+          <ins>`outer` [no LineTerminator here] PrivateIdentifier `:` AssignmentExpression[+In, ?Yield, ?Await]</ins>
+          MethodDefinition[?Yield, ?Await]
+          `...` AssignmentExpression[+In, ?Yield, ?Await]
+      </emu-grammar>
+
+      <emu-clause id="sec-object-initializer-private-elements-early-errors">
+        <h1>Static Semantics: Early Errors</h1>
+        <emu-grammar>
+          ObjectLiteral :
+            `{` PropertyDefinitionList `}`
+            `{` PropertyDefinitionList `,` `}`
+        </emu-grammar>
+        <ul>
+          <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisObject of |PropertyDefinitionList| contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
+        </ul>
+      </emu-clause>
+
+      <emu-clause id="sec-static-semantics-privatenamesusedinthisobject" type="sdo">
+        <h1><ins>Static Semantics: PrivateNamesUsedInThisObject ( ): a List of Strings</ins></h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          ClassElementName :
+            PrivateIdentifier
+            `outer` PrivateIdentifier
+        </emu-grammar>
+        <emu-alg>
+          1. Return a List whose sole element is the StringValue of |PrivateIdentifier|.
+        </emu-alg>
+        <emu-grammar>ClassElementName : PropertyName</emu-grammar>
+        <emu-alg>
+          1. Return a new empty List.
+        </emu-alg>
+        <emu-grammar>FieldDefinition : ClassElementName Initializer?</emu-grammar>
+        <emu-alg>
+          1. Return the PrivateNamesUsedInThisObject of |ClassElementName|.
+        </emu-alg>
+        <emu-grammar>
+          MethodDefinition :
+            ClassElementName `(` UniqueFormalParameters `)` `{` FunctionBody `}`
+            `get` ClassElementName `(` `)` `{` FunctionBody `}`
+            `set` ClassElementName `(` PropertySetParameterList `)` `{` FunctionBody `}`
+
+          GeneratorMethod :
+            `*` ClassElementName `(` UniqueFormalParameters `)` `{` GeneratorBody `}`
+
+          AsyncMethod :
+            `async` ClassElementName `(` UniqueFormalParameters `)` `{` AsyncFunctionBody `}`
+
+          AsyncGeneratorMethod :
+            `async` `*` ClassElementName `(` UniqueFormalParameters `)` `{` AsyncGeneratorBody `}`
+        </emu-grammar>
+        <emu-alg>
+          1. Return the PrivateNamesUsedInThisObject of |ClassElementName|.
+        </emu-alg>
+        <emu-grammar>
+          ClassElement :
+            ClassStaticBlock
+            `;`
+        </emu-grammar>
+        <emu-alg>
+          1. Return a new empty List.
+        </emu-alg>
+        <emu-grammar>ClassElementList : ClassElementList ClassElement</emu-grammar>
+        <emu-alg>
+          1. Let _names1_ be the PrivateNamesUsedInThisObject of |ClassElementList|.
+          1. Let _names2_ be the PrivateNamesUsedInThisObject of |ClassElement|.
+          1. Return the list-concatenation of _names1_ and _names2_.
+        </emu-alg>
+        <emu-grammar>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</emu-grammar>
+        <emu-alg>
+          1. Return a List whose sole element is the StringValue of |PrivateIdentifier|.
+        </emu-alg>
+        <emu-grammar>
+          PropertyDefinition :
+            IdentifierReference
+            CoverInitializedName
+            PropertyName `:` AssignmentExpression
+            `...` AssignmentExpression
+        </emu-grammar>
+        <emu-alg>
+          1. Return a new empty List.
+        </emu-alg>
+        <emu-grammar>PropertyDefinitionList : PropertyDefinitionList `,` PropertyDefinition</emu-grammar>
+        <emu-alg>
+          1. Let _names1_ be the PrivateNamesUsedInThisObject of |PropertyDefinitionList|.
+          1. Let _names2_ be the PrivateNamesUsedInThisObject of |PropertyDefinition|.
+          1. Return the list-concatenation of _names1_ and _names2_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-object-initializer-private-elements-propertydefinitionevaluation" type="sdo">
+        <h1>
+          Runtime Semantics: PropertyDefinitionEvaluation (
+            _obj_: an Object,
+          ): either a normal completion containing ~unused~ or an abrupt completion
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar><ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _privateEnv_ be the running execution context's PrivateEnvironment.</ins>
+          1. <ins>Assert: _privateEnv_ is not *null*.</ins>
+          1. <ins>Let _privateName_ be ResolvePrivateIdentifier(_privateEnv_, the StringValue of |PrivateIdentifier|).</ins>
+          1. <ins>If IsAnonymousFunctionDefinition(|AssignmentExpression|) is *true*, then</ins>
+            1. <ins>Let _value_ be ? NamedEvaluation of |AssignmentExpression| with argument _privateName_.</ins>
+          1. <ins>Else,</ins>
+            1. <ins>Let _valueRef_ be ? Evaluation of |AssignmentExpression|.</ins>
+            1. <ins>Let _value_ be ? GetValue(_valueRef_).</ins>
+          1. <ins>Perform ? PrivateFieldAdd(_obj_, _privateName_, _value_).</ins>
+          1. <ins>Return ~unused~.</ins>
+        </emu-alg>
+        <emu-grammar>PropertyDefinition : MethodDefinition</emu-grammar>
+        <emu-alg>
+          1. <del>Perform ? MethodDefinitionEvaluation of |MethodDefinition| with arguments _obj_ and *true*.</del>
+          1. <ins>Let _method_ be ? MethodDefinitionEvaluation of |MethodDefinition| with arguments _obj_ and *true*.</ins>
+          1. <ins>If _method_ is a PrivateElement, then</ins>
+            1. <ins>If _method_.[[Kind]] is ~accessor~, then</ins>
+              1. <ins>Let _existing_ be PrivateElementFind(_obj_, _method_.[[Key]]).</ins>
+              1. <ins>If _existing_ is not ~empty~, then</ins>
+                1. <ins>Assert: _existing_.[[Kind]] is ~accessor~.</ins>
+                1. <ins>If _method_.[[Getter]] is *undefined*, then</ins>
+                  1. <ins>Assert: _existing_.[[Setter]] is *undefined*.</ins>
+                  1. <ins>Let _combined_ be PrivateElement { [[Key]]: _method_.[[Key]], [[Kind]]: ~accessor~, [[Getter]]: _existing_.[[Getter]], [[Setter]]: _method_.[[Setter]] }.</ins>
+                1. <ins>Else,</ins>
+                  1. <ins>Assert: _existing_.[[Getter]] is *undefined*.</ins>
+                  1. <ins>Let _combined_ be PrivateElement { [[Key]]: _method_.[[Key]], [[Kind]]: ~accessor~, [[Getter]]: _method_.[[Getter]], [[Setter]]: _existing_.[[Setter]] }.</ins>
+                1. <ins>Replace _existing_ in _obj_.[[PrivateElements]] with _combined_.</ins>
+                1. <ins>Return ~unused~.</ins>
+            1. <ins>Perform ? PrivateMethodOrAccessorAdd(_obj_, _method_).</ins>
+          1. Return ~unused~.
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-classes">
+    <h1>Classes</h1>
+
+    <emu-clause id="sec-class-definitions-outer-private-elements">
+      <h1>Class Definitions</h1>
+      <h2>Syntax</h2>
+      <emu-grammar type="definition">
+        ClassElementName[Yield, Await] :
+          PropertyName[?Yield, ?Await]
+          PrivateIdentifier
+          <ins>`outer` [no LineTerminator here] PrivateIdentifier</ins>
+      </emu-grammar>
+
+      <emu-clause id="sec-class-definitions-outer-private-elements-allprivateidentifiersvalid" type="sdo">
+        <h1>
+          Static Semantics: AllPrivateIdentifiersValid (
+            _names_: a List of Strings,
+          ): a Boolean
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>If _names_ contains the StringValue of |PrivateIdentifier|, return *true*.</ins>
+          1. <ins>Return *false*.</ins>
+        </emu-alg>
+        <emu-grammar><ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>If _names_ does not contain the StringValue of |PrivateIdentifier|, return *false*.</ins>
+          1. <ins>Return AllPrivateIdentifiersValid of |AssignmentExpression| with argument _names_.</ins>
+        </emu-alg>
+        <emu-grammar><ins>Block : `{` StatementList `}`</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _newNames_ be a copy of _names_.</ins>
+          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |StatementList|.</ins>
+          1. <ins>Return AllPrivateIdentifiersValid of |StatementList| with argument _newNames_.</ins>
+        </emu-alg>
+        <emu-grammar><ins>FunctionBody : FunctionStatementList</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _newNames_ be a copy of _names_.</ins>
+          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |FunctionStatementList|.</ins>
+          1. <ins>Return AllPrivateIdentifiersValid of |FunctionStatementList| with argument _newNames_.</ins>
+        </emu-alg>
+        <emu-grammar><ins>ScriptBody : StatementList</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _newNames_ be a copy of _names_.</ins>
+          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |StatementList|.</ins>
+          1. <ins>Return AllPrivateIdentifiersValid of |StatementList| with argument _newNames_.</ins>
+        </emu-alg>
+        <emu-grammar><ins>ModuleBody : ModuleItemList</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _newNames_ be a copy of _names_.</ins>
+          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |ModuleItemList|.</ins>
+          1. <ins>Return AllPrivateIdentifiersValid of |ModuleItemList| with argument _newNames_.</ins>
+        </emu-alg>
+        <emu-grammar><ins>ClassStaticBlockBody : ClassStaticBlockStatementList</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _newNames_ be a copy of _names_.</ins>
+          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |ClassStaticBlockStatementList|.</ins>
+          1. <ins>Return AllPrivateIdentifiersValid of |ClassStaticBlockStatementList| with argument _newNames_.</ins>
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-class-definitions-outer-private-elements-early-errors">
+        <h1>Static Semantics: Early Errors</h1>
+        <emu-grammar>ClassBody : ClassElementList</emu-grammar>
+        <ul>
+          <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument *false* contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
+          <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument *true* contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
+        </ul>
+      </emu-clause>
+
+      <emu-clause id="sec-static-semantics-privatenamesusedinthisclassbody" type="sdo">
+        <h1>
+          <ins>Static Semantics: PrivateNamesUsedInThisClassBody (
+            _static_: a Boolean,
+          ): a List of Strings</ins>
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar>ClassElementList : ClassElementList ClassElement</emu-grammar>
+        <emu-alg>
+          1. Let _names1_ be the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument _static_.
+          1. Let _names2_ be the PrivateNamesUsedInThisClassBody of |ClassElement| with argument _static_.
+          1. Return the list-concatenation of _names1_ and _names2_.
+        </emu-alg>
+        <emu-grammar>
+          ClassElement :
+            MethodDefinition
+            FieldDefinition `;`
+        </emu-grammar>
+        <emu-alg>
+          1. If _static_ is *true*, return a new empty List.
+          1. Return the PrivateNamesUsedInThisObject of this |ClassElement|.
+        </emu-alg>
+        <emu-grammar>
+          ClassElement :
+            `static` MethodDefinition
+            `static` FieldDefinition `;`
+        </emu-grammar>
+        <emu-alg>
+          1. If _static_ is *false*, return a new empty List.
+          1. Return the PrivateNamesUsedInThisObject of this |ClassElement|.
+        </emu-alg>
+        <emu-grammar>
+          ClassElement :
+            ClassStaticBlock
+            `;`
+        </emu-grammar>
+        <emu-alg>
+          1. Return a new empty List.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-static-semantics-privateboundidentifiers" type="sdo">
+        <h1>Static Semantics: PrivateBoundIdentifiers ( ): a List of Strings</h1>
+        <dl class="header"></dl>
+
+        <emu-note type="editor">Probably rename this to “CreatedPrivateNames”.</emu-note>
+
+        <emu-grammar><ins>StatementList : StatementList StatementListItem</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _names1_ be the PrivateBoundIdentifiers of |StatementList|.</ins>
+          1. <ins>Let _names2_ be the PrivateBoundIdentifiers of |StatementListItem|.</ins>
+          1. <ins>Return the list-concatenation of _names1_ and _names2_.</ins>
+        </emu-alg>
+
+        <emu-grammar>
+          <ins>StatementListItem :
+            Statement
+            Declaration</ins>
+        </emu-grammar>
+        <emu-alg>
+          1. <ins>Return a new empty List.</ins>
+        </emu-alg>
+
+        <emu-grammar><ins>ModuleItemList : ModuleItemList ModuleItem</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _names1_ be the PrivateBoundIdentifiers of |ModuleItemList|.</ins>
+          1. <ins>Let _names2_ be the PrivateBoundIdentifiers of |ModuleItem|.</ins>
+          1. <ins>Return the list-concatenation of _names1_ and _names2_.</ins>
+        </emu-alg>
+
+        <emu-grammar>
+          <ins>ModuleItem :
+            ImportDeclaration
+            ExportDeclaration</ins>
+        </emu-grammar>
+        <emu-alg>
+          1. <ins>Return a new empty List.</ins>
+        </emu-alg>
+
+        <emu-grammar>
+          <ins>FunctionStatementList : [empty]
+          </ins>
+
+          <ins>ClassStaticBlockStatementList : [empty]
+          </ins>
+
+          <ins>Script : [empty]
+          </ins>
+
+          <ins>Module : [empty]
+          </ins>
+
+          <ins>ExpressionBody : AssignmentExpression</ins>
+        </emu-grammar>
+        <emu-alg>
+          1. <ins>Return a new empty List.</ins>
+        </emu-alg>
+
+        <emu-grammar><ins>PrivateDeclaration : `private` PrivateIdentifier `;`</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Return a List whose sole element is the StringValue of |PrivateIdentifier|.</ins>
+        </emu-alg>
+
+        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Return a new empty List.</ins>
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-class-definitions-outer-private-elements-evaluation" type="sdo">
+        <h1>Runtime Semantics: Evaluation</h1>
+        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Let _privateIdentifier_ be the StringValue of |PrivateIdentifier|.</ins>
+          1. <ins>Let _privateEnv_ be the running execution context's PrivateEnvironment.</ins>
+          1. <ins>Assert: _privateEnv_ is not *null*.</ins>
+          1. <ins>Return ResolvePrivateIdentifier(_privateEnv_, _privateIdentifier_).</ins>
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-switch">
+    <h1>Switch</h1>
+
+    <emu-clause id="sec-switch-private-declarations">
+      <h1>The `switch` Statement</h1>
+
+      <emu-clause id="sec-switch-private-declarations-early-errors">
+        <h1>Static Semantics: Early Errors</h1>
+        <emu-grammar>CaseClause : `case` Expression `:` StatementList</emu-grammar>
+        <ul>
+          <li><ins>It is a Syntax Error if the PrivateBoundIdentifiers of |StatementList| is not empty.</ins></li>
+        </ul>
+        <emu-grammar>DefaultClause : `default` `:` StatementList</emu-grammar>
+        <ul>
+          <li><ins>It is a Syntax Error if the PrivateBoundIdentifiers of |StatementList| is not empty.</ins></li>
+        </ul>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-modified-abstract-operations">
+  <h1>Modified Abstract Operations</h1>
+
+  <emu-clause id="sec-prepareforordinarycall" type="abstract operation">
+    <h1>
+      PrepareForOrdinaryCall (
+        _func_: an ECMAScript function object,
+        _newTarget_: an Object or *undefined*,
+      ): an execution context
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _callerContext_ be the running execution context.
+      1. Let _calleeContext_ be a new ECMAScript code execution context.
+      1. Set the Function of _calleeContext_ to _func_.
+      1. Let _calleeRealm_ be _func_.[[Realm]].
+      1. Set the Realm of _calleeContext_ to _calleeRealm_.
+      1. Set the ScriptOrModule of _calleeContext_ to _func_.[[ScriptOrModule]].
+      1. Let _localEnv_ be NewFunctionEnvironment(_func_, _newTarget_).
+      1. Set the LexicalEnvironment of _calleeContext_ to _localEnv_.
+      1. Set the VariableEnvironment of _calleeContext_ to _localEnv_.
+      1. Set the PrivateEnvironment of _calleeContext_ to _func_.[[PrivateEnvironment]].
+      1. <ins>NOTE: A new PrivateEnvironment is created in FunctionDeclarationInstantiation so that expressions in the parameter list do not have visibility of private names declared in the function body.</ins>
+      1. If _callerContext_ is not already suspended, suspend _callerContext_.
+      1. Push _calleeContext_ onto the execution context stack; _calleeContext_ is now the running execution context.
+      1. NOTE: Any exception objects produced after this point are associated with _calleeRealm_.
+      1. Return _calleeContext_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-functiondeclarationinstantiation" type="abstract operation" oldids="sec-web-compat-functiondeclarationinstantiation">
+    <h1>
+      FunctionDeclarationInstantiation (
+        _func_: an ECMAScript function object,
+        _argList_: a List of ECMAScript language values,
+      ): either a normal completion containing ~unused~ or a throw completion
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>_func_ is the function object for which the execution context is being established.</dd>
+    </dl>
+    <emu-note>
+      <p>When an execution context is established for evaluating an ECMAScript function a new Function Environment Record is created and bindings for each formal parameter are instantiated in that Environment Record. Each declaration in the function body is also instantiated. If the function's formal parameters do not include any default value initializers then the body declarations are instantiated in the same Environment Record as the parameters. If default value parameter initializers exist, a second Environment Record is created for the body declarations. Formal parameters and functions are initialized as part of FunctionDeclarationInstantiation. All other bindings are initialized during evaluation of the function body.</p>
+    </emu-note>
+    <p>It performs the following steps when called:</p>
+    <emu-alg>
+      1. Let _calleeContext_ be the running execution context.
+      1. Let _code_ be _func_.[[ECMAScriptCode]].
+      1. Let _strict_ be _func_.[[Strict]].
+      1. Let _formals_ be _func_.[[FormalParameters]].
+      1. Let _paramNames_ be the BoundNames of _formals_.
+      1. If _paramNames_ has any duplicate entries, let _hasDuplicates_ be *true*; else let _hasDuplicates_ be *false*.
+      1. Let _simpleParamList_ be IsSimpleParameterList of _formals_.
+      1. Let _hasParamExprs_ be ContainsExpression of _formals_.
+      1. Let _variableNames_ be the VarDeclaredNames of _code_.
+      1. Let _variableDecls_ be the VarScopedDeclarations of _code_.
+      1. Let _lexicalNames_ be the LexicallyDeclaredNames of _code_.
+      1. Let _funcNames_ be a new empty List.
+      1. Let _funcsToInitialize_ be a new empty List.
+      1. For each element _variableDecl_ of _variableDecls_, in reverse List order, do
+        1. If _variableDecl_ is neither a |VariableDeclaration| nor a |ForBinding| nor a |BindingIdentifier|, then
+          1. Assert: _variableDecl_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|.
+          1. Let _funcName_ be the sole element of the BoundNames of _variableDecl_.
+          1. If _funcNames_ does not contain _funcName_, then
+            1. Insert _funcName_ as the first element of _funcNames_.
+            1. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
+            1. Insert _variableDecl_ as the first element of _funcsToInitialize_.
+      1. Let _argumentsObjNeeded_ be *true*.
+      1. If _func_.[[ThisMode]] is ~lexical~, then
+        1. NOTE: Arrow functions never have an arguments object.
+        1. Set _argumentsObjNeeded_ to *false*.
+      1. Else if _paramNames_ contains *"arguments"*, then
+        1. Set _argumentsObjNeeded_ to *false*.
+      1. Else if _hasParamExprs_ is *false*, then
+        1. If _funcNames_ contains *"arguments"* or _lexicalNames_ contains *"arguments"*, then
+          1. Set _argumentsObjNeeded_ to *false*.
+      1. If _strict_ is *true* or _hasParamExprs_ is *false*, then
+        1. NOTE: Only a single Environment Record is needed for the parameters, since calls to `eval` in strict mode code cannot create new bindings which are visible outside of the `eval`.
+        1. Let _envRecord_ be the LexicalEnvironment of _calleeContext_.
+      1. Else,
+        1. NOTE: A separate Environment Record is needed to ensure that bindings created by direct eval calls in the formal parameter list are outside the environment where parameters are declared.
+        1. Let _calleeEnv_ be the LexicalEnvironment of _calleeContext_.
+        1. Let _envRecord_ be NewDeclarativeEnvironment(_calleeEnv_).
+        1. Assert: The VariableEnvironment of _calleeContext_ and _calleeEnv_ are the same Environment Record.
+        1. Set the LexicalEnvironment of _calleeContext_ to _envRecord_.
+      1. For each String _paramName_ of _paramNames_, do
+        1. Let _alreadyDeclared_ be ! _envRecord_.HasBinding(_paramName_).
+        1. NOTE: Early errors ensure that duplicate parameter names can only occur in non-strict functions that do not have parameter default values or rest parameters.
+        1. If _alreadyDeclared_ is *false*, then
+          1. Perform ! _envRecord_.CreateMutableBinding(_paramName_, *false*).
+          1. If _hasDuplicates_ is *true*, then
+            1. Perform ! _envRecord_.InitializeBinding(_paramName_, *undefined*).
+      1. If _argumentsObjNeeded_ is *true*, then
+        1. If _strict_ is *true* or _simpleParamList_ is *false*, then
+          1. Let _argumentsObj_ be CreateUnmappedArgumentsObject(_argList_).
+        1. Else,
+          1. NOTE: A mapped argument object is only provided for non-strict functions that don't have a rest parameter, any parameter default value initializers, or any destructured parameters.
+          1. Let _argumentsObj_ be CreateMappedArgumentsObject(_func_, _formals_, _argList_, _envRecord_).
+        1. If _strict_ is *true*, then
+          1. Perform ! _envRecord_.CreateImmutableBinding(*"arguments"*, *false*).
+          1. NOTE: In strict mode code early errors prevent attempting to assign to this binding, so its mutability is not observable.
+        1. Else,
+          1. Perform ! _envRecord_.CreateMutableBinding(*"arguments"*, *false*).
+        1. Perform ! _envRecord_.InitializeBinding(*"arguments"*, _argumentsObj_).
+        1. Let _paramBindings_ be the list-concatenation of _paramNames_ and « *"arguments"* ».
+      1. Else,
+        1. Let _paramBindings_ be _paramNames_.
+      1. Let _iteratorRecord_ be CreateListIteratorRecord(_argList_).
+      1. If _hasDuplicates_ is *true*, then
+        1. Let _usedEnv_ be *undefined*.
+      1. Else,
+        1. Let _usedEnv_ be _envRecord_.
+      1. NOTE: The following step cannot return a ReturnCompletion because the only way such a completion can arise in expression position is by use of |YieldExpression|, which is forbidden in parameter lists by Early Error rules in <emu-xref href="#sec-generator-function-definitions-static-semantics-early-errors"></emu-xref> and <emu-xref href="#sec-async-generator-function-definitions-static-semantics-early-errors"></emu-xref>.
+      1. Perform ? IteratorBindingInitialization of _formals_ with arguments _iteratorRecord_ and _usedEnv_.
+      1. <ins>Let _privateBoundIdentifiers_ be the PrivateBoundIdentifiers of _code_.</ins>
+      1. <ins>Let _calleePrivateEnv_ be the PrivateEnvironment of _calleeContext_.</ins>
+      1. <ins>Let _privateEnv_ be NewPrivateEnvironment(_calleePrivateEnv_).</ins>
+      1. <ins>Set the PrivateEnvironment of _calleeContext_ to _privateEnv_.</ins>
+      1. <ins>Perform AddPrivateNames(_privateEnv_, _privateBoundIdentifiers_).</ins>
+      1. If _hasParamExprs_ is *false*, then
+        1. NOTE: Only a single Environment Record is needed for the parameters and top-level vars.
+        1. Let _instantiatedVariableNames_ be a copy of the List _paramBindings_.
+        1. For each element _name_ of _variableNames_, do
+          1. If _instantiatedVariableNames_ does not contain _name_, then
+            1. Append _name_ to _instantiatedVariableNames_.
+            1. Perform ! _envRecord_.CreateMutableBinding(_name_, *false*).
+            1. Perform ! _envRecord_.InitializeBinding(_name_, *undefined*).
+        1. Let _variableEnv_ be _envRecord_.
+      1. Else,
+        1. NOTE: A separate Environment Record is needed to ensure that closures created by expressions in the formal parameter list do not have visibility of declarations in the function body.
+        1. Let _variableEnv_ be NewDeclarativeEnvironment(_envRecord_).
+        1. Set the VariableEnvironment of _calleeContext_ to _variableEnv_.
+        1. Let _instantiatedVariableNames_ be a new empty List.
+        1. For each element _name_ of _variableNames_, do
+          1. If _instantiatedVariableNames_ does not contain _name_, then
+            1. Append _name_ to _instantiatedVariableNames_.
+            1. Perform ! _variableEnv_.CreateMutableBinding(_name_, *false*).
+            1. If _paramBindings_ does not contain _name_ or _funcNames_ contains _name_, then
+              1. Let _initialValue_ be *undefined*.
+            1. Else,
+              1. Let _initialValue_ be ! _envRecord_.GetBindingValue(_name_, *false*).
+            1. Perform ! _variableEnv_.InitializeBinding(_name_, _initialValue_).
+            1. NOTE: A var with the same name as a formal parameter initially has the same value as the corresponding initialized parameter.
+      1. If _strict_ is *true*, then
+        1. Let _lexicalEnv_ be _variableEnv_.
+      1. Else,
+        1. [id="step-functiondeclarationinstantiation-web-compat-insertion-point", normative-optional] If the host is a web browser or otherwise supports <emu-xref href="#sec-block-level-function-declarations-web-legacy-compatibility-semantics" title></emu-xref>, then
+          1. For each |FunctionDeclaration| _funcDecl_ that is directly contained in the |StatementList| of any |Block|, |CaseClause|, or |DefaultClause| _x_ such that _code_ Contains _x_ is *true*, do
+            1. Let _funcName_ be the StringValue of the |BindingIdentifier| of _funcDecl_.
+            1. If replacing the |FunctionDeclaration| _funcDecl_ with a |VariableStatement| that has _funcName_ as a |BindingIdentifier| would not produce any Early Errors for _func_ and _paramNames_ does not contain _funcName_, then
+              1. NOTE: A var binding for _funcName_ is only instantiated here if it is neither a VarDeclaredName, the name of a formal parameter, or another |FunctionDeclaration|.
+              1. If _instantiatedVariableNames_ does not contain _funcName_ and _funcName_ is not *"arguments"*, then
+                1. Perform ! _variableEnv_.CreateMutableBinding(_funcName_, *false*).
+                1. Perform ! _variableEnv_.InitializeBinding(_funcName_, *undefined*).
+                1. Append _funcName_ to _instantiatedVariableNames_.
+              1. [id="step-functiondeclarationinstantiation-alt-funcdecl-eval"] When the |FunctionDeclaration| _funcDecl_ is evaluated, perform the following steps in place of the |FunctionDeclaration| Evaluation algorithm provided in <emu-xref href="#sec-function-definitions-runtime-semantics-evaluation"></emu-xref>:
+                1. Let _funcEnv_ be the running execution context's VariableEnvironment.
+                1. Let _blockEnv_ be the running execution context's LexicalEnvironment.
+                1. Let _funcObj_ be ! _blockEnv_.GetBindingValue(_funcName_, *false*).
+                1. Perform ! _funcEnv_.SetMutableBinding(_funcName_, _funcObj_, *false*).
+                1. Return ~unused~.
+        1. Let _lexicalEnv_ be NewDeclarativeEnvironment(_variableEnv_).
+        1. NOTE: Non-strict functions use a separate Environment Record for top-level lexical declarations so that a direct eval can determine whether any var scoped declarations introduced by the eval code conflict with pre-existing top-level lexically scoped declarations. This is not needed for strict functions because a strict direct eval always places all declarations into a new Environment Record.
+      1. Set the LexicalEnvironment of _calleeContext_ to _lexicalEnv_.
+      1. Let _lexicalDecls_ be the LexicallyScopedDeclarations of _code_.
+      1. For each element _lexicalDecl_ of _lexicalDecls_, do
+        1. NOTE: A lexically declared name cannot be the same as a function/generator declaration, formal parameter, or a var name. Lexically declared names are only instantiated here but not initialized.
+        1. For each element _name_ of the BoundNames of _lexicalDecl_, do
+          1. If IsConstantDeclaration of _lexicalDecl_ is *true*, then
+            1. Perform ! _lexicalEnv_.CreateImmutableBinding(_name_, *true*).
+          1. Else,
+            1. Perform ! _lexicalEnv_.CreateMutableBinding(_name_, *false*).
+      1. <del>Let _privateEnv_ be the PrivateEnvironment of _calleeContext_.</del>
+      1. For each Parse Node _funcDecl_ of _funcsToInitialize_, do
+        1. Let _funcName_ be the sole element of the BoundNames of _funcDecl_.
+        1. Let _funcObj_ be InstantiateFunctionObject of _funcDecl_ with arguments _lexicalEnv_ and _privateEnv_.
+        1. Perform ! _variableEnv_.SetMutableBinding(_funcName_, _funcObj_, *false*).
+      1. Return ~unused~.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-source-text-module-record-initialize-environment" type="concrete method">
+    <h1>InitializeEnvironment ( ): either a normal completion containing ~unused~ or a throw completion</h1>
+    <dl class="header">
+      <dt>for</dt>
+      <dd>a Source Text Module Record _module_</dd>
+    </dl>
+
+    <emu-alg>
+      1. For each ExportEntry Record _exportEntry_ of _module_.[[IndirectExportEntries]], do
+        1. Assert: _exportEntry_.[[ExportName]] is not *null*.
+        1. Let _resolution_ be _module_.ResolveExport(_exportEntry_.[[ExportName]]).
+        1. If _resolution_ is either *null* or ~ambiguous~, throw a *SyntaxError* exception.
+        1. Assert: _resolution_ is a ResolvedBinding Record.
+      1. Assert: All named exports from _module_ are resolvable.
+      1. Let _realm_ be _module_.[[Realm]].
+      1. Assert: _realm_ is not *undefined*.
+      1. Let _envRecord_ be NewModuleEnvironment(_realm_.[[GlobalEnv]]).
+      1. Set _module_.[[Environment]] to _envRecord_.
+      1. For each ImportEntry Record _importEntry_ of _module_.[[ImportEntries]], do
+        1. Let _importedModule_ be GetImportedModule(_module_, _importEntry_.[[ModuleRequest]]).
+        1. If _importEntry_.[[ImportName]] is ~namespace~, then
+          1. Let _namespace_ be GetModuleNamespace(_importedModule_).
+          1. Perform ! _envRecord_.CreateImmutableBinding(_importEntry_.[[LocalName]], *true*).
+          1. Perform ! _envRecord_.InitializeBinding(_importEntry_.[[LocalName]], _namespace_).
+        1. Else,
+          1. Assert: _importEntry_.[[ImportName]] is a String.
+          1. Let _resolution_ be _importedModule_.ResolveExport(_importEntry_.[[ImportName]]).
+          1. If _resolution_ is either *null* or ~ambiguous~, throw a *SyntaxError* exception.
+          1. If _resolution_.[[BindingName]] is ~namespace~, then
+            1. Let _namespace_ be GetModuleNamespace(_resolution_.[[Module]]).
+            1. Perform ! _envRecord_.CreateImmutableBinding(_importEntry_.[[LocalName]], *true*).
+            1. Perform ! _envRecord_.InitializeBinding(_importEntry_.[[LocalName]], _namespace_).
+          1. Else,
+            1. Perform CreateImportBinding(_envRecord_, _importEntry_.[[LocalName]], _resolution_.[[Module]], _resolution_.[[BindingName]]).
+      1. Let _moduleContext_ be a new ECMAScript code execution context.
+      1. Set the Function of _moduleContext_ to *null*.
+      1. Assert: _module_.[[Realm]] is not *undefined*.
+      1. Set the Realm of _moduleContext_ to _module_.[[Realm]].
+      1. Set the ScriptOrModule of _moduleContext_ to _module_.
+      1. Set the VariableEnvironment of _moduleContext_ to _module_.[[Environment]].
+      1. Set the LexicalEnvironment of _moduleContext_ to _module_.[[Environment]].
+      1. Set the PrivateEnvironment of _moduleContext_ to <del>*null*</del><ins>NewPrivateEnvironment(*null*)</ins>.
+      1. Set _module_.[[Context]] to _moduleContext_.
+      1. Push _moduleContext_ onto the execution context stack; _moduleContext_ is now the running execution context.
+      1. Let _code_ be _module_.[[ECMAScriptCode]].
+      1. <ins>Let _privateEnv_ be the PrivateEnvironment of _moduleContext_.</ins>
+      1. <ins>Let _privateBoundIdentifiers_ be the PrivateBoundIdentifiers of _code_.</ins>
+      1. <ins>Perform AddPrivateNames(_privateEnv_, _privateBoundIdentifiers_).</ins>
+      1. Let _variableDecls_ be the VarScopedDeclarations of _code_.
+      1. Let _declaredVariableNames_ be a new empty List.
+      1. For each element _variableDecl_ of _variableDecls_, do
+        1. For each element _name_ of the BoundNames of _variableDecl_, do
+          1. If _declaredVariableNames_ does not contain _name_, then
+            1. Perform ! _envRecord_.CreateMutableBinding(_name_, *false*).
+            1. Perform ! _envRecord_.InitializeBinding(_name_, *undefined*).
+            1. Append _name_ to _declaredVariableNames_.
+      1. Let _lexicalDecls_ be the LexicallyScopedDeclarations of _code_.
+      1. <del>Let _privateEnv_ be *null*.</del>
+      1. For each element _lexicalDecl_ of _lexicalDecls_, do
+        1. For each element _name_ of the BoundNames of _lexicalDecl_, do
+          1. If IsConstantDeclaration of _lexicalDecl_ is *true*, then
+            1. Perform ! _envRecord_.CreateImmutableBinding(_name_, *true*).
+          1. Else,
+            1. Perform ! _envRecord_.CreateMutableBinding(_name_, *false*).
+          1. If _lexicalDecl_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
+            1. Let _funcObj_ be InstantiateFunctionObject of _lexicalDecl_ with arguments _envRecord_ and _privateEnv_.
+            1. Perform ! _envRecord_.InitializeBinding(_name_, _funcObj_).
+      1. Remove _moduleContext_ from the execution context stack.
+      1. Return ~unused~.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-runtime-semantics-scriptevaluation" type="abstract operation">
+    <h1>
+      ScriptEvaluation (
+        _scriptRecord_: a Script Record,
+      ): either a normal completion containing an ECMAScript language value or an abrupt completion
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _globalEnv_ be _scriptRecord_.[[Realm]].[[GlobalEnv]].
+      1. Let _scriptContext_ be a new ECMAScript code execution context.
+      1. Set the Function of _scriptContext_ to *null*.
+      1. Set the Realm of _scriptContext_ to _scriptRecord_.[[Realm]].
+      1. Set the ScriptOrModule of _scriptContext_ to _scriptRecord_.
+      1. Set the VariableEnvironment of _scriptContext_ to _globalEnv_.
+      1. Set the LexicalEnvironment of _scriptContext_ to _globalEnv_.
+      1. Set the PrivateEnvironment of _scriptContext_ to <del>*null*</del><ins>NewPrivateEnvironment(*null*)</ins>.
+      1. Suspend the running execution context.
+      1. Push _scriptContext_ onto the execution context stack; _scriptContext_ is now the running execution context.
+      1. Let _scriptNode_ be _scriptRecord_.[[ECMAScriptCode]].
+      1. <ins>Let _privateEnv_ be the PrivateEnvironment of _scriptContext_.</ins>
+      1. Let _result_ be Completion(GlobalDeclarationInstantiation(_scriptNode_, _globalEnv_<ins>, _privateEnv_</ins>)).
+      1. If _result_ is a normal completion, then
+        1. Set _result_ to Completion(Evaluation of _scriptNode_).
+        1. If _result_ is a normal completion and _result_.[[Value]] is ~empty~, then
+          1. Set _result_ to NormalCompletion(*undefined*).
+      1. Suspend _scriptContext_ and remove it from the execution context stack.
+      1. Assert: The execution context stack is not empty.
+      1. Resume the context that is now on the top of the execution context stack as the running execution context.
+      1. Return ? _result_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-globaldeclarationinstantiation" type="abstract operation" oldids="sec-web-compat-globaldeclarationinstantiation">
+    <h1>
+      GlobalDeclarationInstantiation (
+        _script_: a |Script| Parse Node,
+        _envRecord_: a Global Environment Record,
+        <ins>_privateEnv_: a PrivateEnvironment Record,</ins>
+      ): either a normal completion containing ~unused~ or a throw completion
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>_script_ is the |Script| for which the execution context is being established. _envRecord_ is the global environment in which bindings are to be created. <ins>_privateEnv_ is the private environment in which private names are to be created.</ins></dd>
+    </dl>
+    <emu-note>
+      <p>When an execution context is established for evaluating scripts, declarations are instantiated in the current global environment. Each global binding declared in the code is instantiated.</p>
+    </emu-note>
+    <p>It performs the following steps when called:</p>
+    <emu-alg>
+      1. <ins>Let _privateBoundIdentifiers_ be the PrivateBoundIdentifiers of _script_.</ins>
+      1. <ins>Perform AddPrivateNames(_privateEnv_, _privateBoundIdentifiers_).</ins>
+      1. Let _lexicalNames_ be the LexicallyDeclaredNames of _script_.
+      1. Let _variableNames_ be the VarDeclaredNames of _script_.
+      1. For each element _name_ of _lexicalNames_, do
+        1. If HasLexicalDeclaration(_envRecord_, _name_) is *true*, throw a *SyntaxError* exception.
+        1. Let _hasRestrictedGlobal_ be ? HasRestrictedGlobalProperty(_envRecord_, _name_).
+        1. NOTE: Global `var` and `function` bindings (except those that are introduced by non-strict direct eval) are non-configurable and are therefore restricted global properties.
+        1. If _hasRestrictedGlobal_ is *true*, throw a *SyntaxError* exception.
+      1. For each element _name_ of _variableNames_, do
+        1. If HasLexicalDeclaration(_envRecord_, _name_) is *true*, throw a *SyntaxError* exception.
+      1. Let _variableDecls_ be the VarScopedDeclarations of _script_.
+      1. Let _funcsToInitialize_ be a new empty List.
+      1. Let _declaredFuncNames_ be a new empty List.
+      1. For each element _variableDecl_ of _variableDecls_, in reverse List order, do
+        1. If _variableDecl_ is not either a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
+          1. Assert: _variableDecl_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|.
+          1. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
+          1. Let _funcName_ be the sole element of the BoundNames of _variableDecl_.
+          1. If _declaredFuncNames_ does not contain _funcName_, then
+            1. Let _funcDefinable_ be ? CanDeclareGlobalFunction(_envRecord_, _funcName_).
+            1. If _funcDefinable_ is *false*, throw a *TypeError* exception.
+            1. Append _funcName_ to _declaredFuncNames_.
+            1. Insert _variableDecl_ as the first element of _funcsToInitialize_.
+      1. Let _declaredVariableNames_ be a new empty List.
+      1. For each element _variableDecl_ of _variableDecls_, do
+        1. If _variableDecl_ is either a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
+          1. For each String _name_ of the BoundNames of _variableDecl_, do
+            1. If _declaredFuncNames_ does not contain _name_, then
+              1. Let _variableDefinable_ be ? CanDeclareGlobalVar(_envRecord_, _name_).
+              1. If _variableDefinable_ is *false*, throw a *TypeError* exception.
+              1. If _declaredVariableNames_ does not contain _name_, then
+                1. Append _name_ to _declaredVariableNames_.
+      1. NOTE: No abnormal terminations occur after this algorithm step if the global object is an ordinary object. However, if the global object is a Proxy exotic object it may exhibit behaviours that cause abnormal terminations in some of the following steps.
+      1. [id="step-globaldeclarationinstantiation-web-compat-insertion-point", normative-optional] If the host is a web browser or otherwise supports <emu-xref href="#sec-block-level-function-declarations-web-legacy-compatibility-semantics" title></emu-xref>, then
+        1. Let _strict_ be ScriptIsStrict of _script_.
+        1. If _strict_ is *false*, then
+          1. Let _declaredFuncOrVariableNames_ be the list-concatenation of _declaredFuncNames_ and _declaredVariableNames_.
+          1. For each |FunctionDeclaration| _funcDecl_ that is directly contained in the |StatementList| of any |Block|, |CaseClause|, or |DefaultClause| _x_ such that _script_ Contains _x_ is *true*, do
+            1. Let _funcName_ be the StringValue of the |BindingIdentifier| of _funcDecl_.
+            1. If replacing the |FunctionDeclaration| _funcDecl_ with a |VariableStatement| that has _funcName_ as a |BindingIdentifier| would not produce any Early Errors for _script_, then
+              1. If HasLexicalDeclaration(_envRecord_, _funcName_) is *false*, then
+                1. Let _funcDefinable_ be ? CanDeclareGlobalVar(_envRecord_, _funcName_).
+                1. If _funcDefinable_ is *true*, then
+                  1. NOTE: A var binding for _funcName_ is only instantiated here if it is neither a VarDeclaredName nor the name of another |FunctionDeclaration|.
+                  1. If _declaredFuncOrVariableNames_ does not contain _funcName_, then
+                    1. Perform ? CreateGlobalVarBinding(_envRecord_, _funcName_, *false*).
+                    1. Append _funcName_ to _declaredFuncOrVariableNames_.
+                  1. [id="step-globaldeclarationinstantiation-alt-funcdecl-eval"] When the |FunctionDeclaration| _funcDecl_ is evaluated, perform the following steps in place of the |FunctionDeclaration| Evaluation algorithm provided in <emu-xref href="#sec-function-definitions-runtime-semantics-evaluation"></emu-xref>:
+                    1. Let _globalEnv_ be the running execution context's VariableEnvironment.
+                    1. Let _blockEnv_ be the running execution context's LexicalEnvironment.
+                    1. Let _funcObj_ be ! _blockEnv_.GetBindingValue(_funcName_, *false*).
+                    1. Perform ? <emu-meta effects="user-code">_globalEnv_.SetMutableBinding(_funcName_, _funcObj_, *false*)</emu-meta>.
+                    1. Return ~unused~.
+      1. Let _lexicalDecls_ be the LexicallyScopedDeclarations of _script_.
+      1. <del>Let _privateEnv_ be *null*.</del>
+      1. For each element _lexicalDecl_ of _lexicalDecls_, do
+        1. NOTE: Lexically declared names are only instantiated here but not initialized.
+        1. For each element _name_ of the BoundNames of _lexicalDecl_, do
+          1. If IsConstantDeclaration of _lexicalDecl_ is *true*, then
+            1. Perform ? <emu-meta effects="user-code">_envRecord_.CreateImmutableBinding(_name_, *true*)</emu-meta>.
+          1. Else,
+            1. Perform ? <emu-meta effects="user-code">_envRecord_.CreateMutableBinding(_name_, *false*)</emu-meta>.
+      1. For each Parse Node _funcDecl_ of _funcsToInitialize_, do
+        1. Let _funcName_ be the sole element of the BoundNames of _funcDecl_.
+        1. Let _funcObj_ be InstantiateFunctionObject of _funcDecl_ with arguments _envRecord_ and _privateEnv_.
+        1. Perform ? <emu-meta effects="user-code">CreateGlobalFunctionBinding(_envRecord_, _funcName_, _funcObj_, *false*)</emu-meta>.
+      1. For each String _variableName_ of _declaredVariableNames_, do
+        1. Perform ? <emu-meta effects="user-code">CreateGlobalVarBinding(_envRecord_, _variableName_, *false*)</emu-meta>.
+      1. Return ~unused~.
+    </emu-alg>
+    <emu-note>
+      <p>Early errors specified in <emu-xref href="#sec-scripts-static-semantics-early-errors"></emu-xref> prevent name conflicts between function/var declarations and let/const/class declarations as well as redeclaration of let/const/class bindings for declaration contained within a single |Script|. However, such conflicts and redeclarations that span more than one |Script| are detected as runtime errors during GlobalDeclarationInstantiation. If any such errors are detected, no bindings are instantiated for the script. However, if the global object is defined using Proxy exotic objects then the runtime tests for conflicting declarations may be unreliable resulting in an abrupt completion and some global declarations not being instantiated. If this occurs, the code for the |Script| is not evaluated.</p>
+      <p>Unlike explicit var or function declarations, properties that are directly created on the global object result in global bindings that may be shadowed by let/const/class declarations.</p>
+    </emu-note>
+  </emu-clause>
+
+  <emu-clause id="sec-performeval" type="abstract operation" oldids="sec-performeval-rules-outside-functions,sec-performeval-rules-outside-methods,sec-performeval-rules-outside-constructors">
+    <h1>
+      PerformEval (
+        _source_: an ECMAScript language value,
+        _strictCaller_: a Boolean,
+        _direct_: a Boolean,
+      ): either a normal completion containing an ECMAScript language value or a throw completion
+    </h1>
+    <dl class="header">
+    </dl>
+    <emu-alg>
+      1. Assert: If _direct_ is *false*, then _strictCaller_ is also *false*.
+      1. If _source_ is not a String, return _source_.
+      1. Let _evalRealm_ be the current Realm Record.
+      1. NOTE: In the case of a direct eval, _evalRealm_ is the realm of both the caller of `eval` and of the `eval` function itself.
+      1. Perform ? HostEnsureCanCompileStrings(_evalRealm_, « », _source_, _direct_).
+      1. Let _inFunc_ be *false*.
+      1. Let _inMethod_ be *false*.
+      1. Let _inDerivedCtor_ be *false*.
+      1. Let _inClassFieldInitializer_ be *false*.
+      1. If _direct_ is *true*, then
+        1. Let _thisEnvRecord_ be GetThisEnvironment().
+        1. If _thisEnvRecord_ is a Function Environment Record, then
+          1. Let _func_ be _thisEnvRecord_.[[FunctionObject]].
+          1. Set _inFunc_ to *true*.
+          1. Set _inMethod_ to _thisEnvRecord_.HasSuperBinding().
+          1. If _func_.[[ConstructorKind]] is ~derived~, set _inDerivedCtor_ to *true*.
+          1. Let _classFieldInitializerName_ be _func_.[[ClassFieldInitializerName]].
+          1. If _classFieldInitializerName_ is not ~empty~, set _inClassFieldInitializer_ to *true*.
+      1. Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:
+        1. Let _script_ be ParseText(_source_, |Script|).
+        1. If _script_ is a List of errors, throw a *SyntaxError* exception.
+        1. If _script_ Contains |ScriptBody| is *false*, return *undefined*.
+        1. Let _body_ be the |ScriptBody| of _script_.
+        1. If _inFunc_ is *false* and _body_ Contains |NewTarget|, throw a *SyntaxError* exception.
+        1. If _inMethod_ is *false* and _body_ Contains |SuperProperty|, throw a *SyntaxError* exception.
+        1. If _inDerivedCtor_ is *false* and _body_ Contains |SuperCall|, throw a *SyntaxError* exception.
+        1. If _inClassFieldInitializer_ is *true* and ContainsArguments of _body_ is *true*, throw a *SyntaxError* exception.
+      1. If _strictCaller_ is *true*, let _strictEval_ be *true*.
+      1. Else, let _strictEval_ be ScriptIsStrict of _script_.
+      1. Let _runningContext_ be the running execution context.
+      1. NOTE: If _direct_ is *true*, _runningContext_ will be the execution context that performed the direct eval. If _direct_ is *false*, _runningContext_ will be the execution context for the invocation of the `eval` function.
+      1. If _direct_ is *true*, then
+        1. Let _lexicalEnv_ be NewDeclarativeEnvironment(_runningContext_'s LexicalEnvironment).
+        1. Let _variableEnv_ be _runningContext_'s VariableEnvironment.
+        1. Let _privateEnv_ be _runningContext_'s PrivateEnvironment.
+      1. Else,
+        1. Let _lexicalEnv_ be NewDeclarativeEnvironment(_evalRealm_.[[GlobalEnv]]).
+        1. Let _variableEnv_ be _evalRealm_.[[GlobalEnv]].
+        1. Let _privateEnv_ be *null*.
+      1. <ins>Set _privateEnv_ to NewPrivateEnvironment(_privateEnv_).</ins>
+      1. If _strictEval_ is *true*, set _variableEnv_ to _lexicalEnv_.
+      1. If _runningContext_ is not already suspended, suspend _runningContext_.
+      1. Let _evalContext_ be a new ECMAScript code execution context.
+      1. Set _evalContext_'s Function to *null*.
+      1. Set _evalContext_'s Realm to _evalRealm_.
+      1. Set _evalContext_'s ScriptOrModule to _runningContext_'s ScriptOrModule.
+      1. Set _evalContext_'s VariableEnvironment to _variableEnv_.
+      1. Set _evalContext_'s LexicalEnvironment to _lexicalEnv_.
+      1. Set _evalContext_'s PrivateEnvironment to _privateEnv_.
+      1. Push _evalContext_ onto the execution context stack; _evalContext_ is now the running execution context.
+      1. Let _result_ be Completion(EvalDeclarationInstantiation(_body_, _variableEnv_, _lexicalEnv_, _privateEnv_, _strictEval_)).
+      1. If _result_ is a normal completion, then
+        1. Set _result_ to Completion(Evaluation of _body_).
+      1. If _result_ is a normal completion and _result_.[[Value]] is ~empty~, then
+        1. Set _result_ to NormalCompletion(*undefined*).
+      1. Suspend _evalContext_ and remove it from the execution context stack.
+      1. Resume the context that is now on the top of the execution context stack as the running execution context.
+      1. Return ? _result_.
+    </emu-alg>
+    <emu-note>
+      <p>The eval code cannot instantiate variable or function bindings in the variable environment of the calling context that invoked the eval if either the code of the calling context or the eval code is strict mode code. Instead such bindings are instantiated in a new VariableEnvironment that is only accessible to the eval code. Bindings introduced by `let`, `const`, or `class` declarations are always instantiated in a new LexicalEnvironment.</p>
+    </emu-note>
+  </emu-clause>
+
+  <emu-clause id="sec-evaldeclarationinstantiation" type="abstract operation" oldids="sec-web-compat-evaldeclarationinstantiation">
+    <h1>
+      EvalDeclarationInstantiation (
+        _body_: a |ScriptBody| Parse Node,
+        _variableEnv_: an Environment Record,
+        _lexicalEnv_: a Declarative Environment Record,
+        _privateEnv_: a PrivateEnvironment Record or *null*,
+        _strict_: a Boolean,
+      ): either a normal completion containing ~unused~ or a throw completion
+    </h1>
+    <dl class="header">
+    </dl>
+    <emu-alg>
+      1. <ins>Assert: _privateEnv_ is not *null*.</ins>
+      1. <ins>Let _privateBoundIdentifiers_ be the PrivateBoundIdentifiers of _body_.</ins>
+      1. <ins>Perform AddPrivateNames(_privateEnv_, _privateBoundIdentifiers_).</ins>
+      1. Let _variableNames_ be the VarDeclaredNames of _body_.
+      1. Let _variableDecls_ be the VarScopedDeclarations of _body_.
+      1. If _strict_ is *false*, then
+        1. If _variableEnv_ is a Global Environment Record, then
+          1. For each element _name_ of _variableNames_, do
+            1. If HasLexicalDeclaration(_variableEnv_, _name_) is *true*, throw a *SyntaxError* exception.
+            1. NOTE: `eval` will not create a global var declaration that would be shadowed by a global lexical declaration.
+        1. Let _thisEnv_ be _lexicalEnv_.
+        1. Assert: The following loop will terminate.
+        1. Repeat, while _thisEnv_ and _variableEnv_ are not the same Environment Record,
+          1. If _thisEnv_ is not an Object Environment Record, then
+            1. NOTE: The environment of with statements cannot contain any lexical declaration so it doesn't need to be checked for var/let hoisting conflicts.
+            1. For each element _name_ of _variableNames_, do
+              1. If ! _thisEnv_.HasBinding(_name_) is *true*, then
+                1. [id="step-evaldeclarationinstantiation-throw-duplicate-binding", normative-optional] If the host is a web browser or otherwise supports <emu-xref href="#sec-variablestatements-in-catch-blocks" title></emu-xref>, then
+                  1. If _thisEnv_ is not the Environment Record for a |Catch| clause, throw a *SyntaxError* exception.
+                1. Else,
+                  1. Throw a *SyntaxError* exception.
+              1. NOTE: A direct eval will not hoist var declaration over a like-named lexical declaration.
+          1. Set _thisEnv_ to _thisEnv_.[[OuterEnv]].
+      1. Let _privateIdentifiers_ be a new empty List.
+      1. Let _pointer_ be _privateEnv_.
+      1. Repeat, while _pointer_ is not *null*,
+        1. For each Private Name _binding_ of _pointer_.[[Names]], do
+          1. If _privateIdentifiers_ does not contain _binding_.[[Description]], append _binding_.[[Description]] to _privateIdentifiers_.
+        1. Set _pointer_ to _pointer_.[[OuterPrivateEnvironment]].
+      1. If AllPrivateIdentifiersValid of _body_ with argument _privateIdentifiers_ is *false*, throw a *SyntaxError* exception.
+      1. Let _funcsToInitialize_ be a new empty List.
+      1. Let _declaredFuncNames_ be a new empty List.
+      1. For each element _variableDecl_ of _variableDecls_, in reverse List order, do
+        1. If _variableDecl_ is not either a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
+          1. Assert: _variableDecl_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|.
+          1. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
+          1. Let _funcName_ be the sole element of the BoundNames of _variableDecl_.
+          1. If _declaredFuncNames_ does not contain _funcName_, then
+            1. If _variableEnv_ is a Global Environment Record, then
+              1. Let _funcDefinable_ be ? CanDeclareGlobalFunction(_variableEnv_, _funcName_).
+              1. If _funcDefinable_ is *false*, throw a *TypeError* exception.
+            1. Append _funcName_ to _declaredFuncNames_.
+            1. Insert _variableDecl_ as the first element of _funcsToInitialize_.
+      1. Let _declaredVariableNames_ be a new empty List.
+      1. For each element _variableDecl_ of _variableDecls_, do
+        1. If _variableDecl_ is either a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
+          1. For each String _name_ of the BoundNames of _variableDecl_, do
+            1. If _declaredFuncNames_ does not contain _name_, then
+              1. If _variableEnv_ is a Global Environment Record, then
+                1. Let _variableDefinable_ be ? CanDeclareGlobalVar(_variableEnv_, _name_).
+                1. If _variableDefinable_ is *false*, throw a *TypeError* exception.
+              1. If _declaredVariableNames_ does not contain _name_, then
+                1. Append _name_ to _declaredVariableNames_.
+      1. [id="step-evaldeclarationinstantiation-web-compat-insertion-point", normative-optional] If _strict_ is *false* and the host is a web browser or otherwise supports <emu-xref href="#sec-block-level-function-declarations-web-legacy-compatibility-semantics" title></emu-xref>, then
+        1. Let _declaredFuncOrVariableNames_ be the list-concatenation of _declaredFuncNames_ and _declaredVariableNames_.
+        1. For each |FunctionDeclaration| _funcDecl_ that is directly contained in the |StatementList| of any |Block|, |CaseClause|, or |DefaultClause| _x_ such that _body_ Contains _x_ is *true*, do
+          1. Let _funcName_ be the StringValue of the |BindingIdentifier| of _funcDecl_.
+          1. If replacing the |FunctionDeclaration| _funcDecl_ with a |VariableStatement| that has _funcName_ as a |BindingIdentifier| would not produce any Early Errors for _body_, then
+            1. Let _bindingExists_ be *false*.
+            1. Set _thisEnv_ to _lexicalEnv_.
+            1. Assert: The following loop will terminate.
+            1. Repeat, while _thisEnv_ is not _variableEnv_,
+              1. If _thisEnv_ is not an Object Environment Record, then
+                1. If ! _thisEnv_.HasBinding(_funcName_) is *true*, then
+                  1. [id="step-evaldeclarationinstantiation-web-compat-bindingexists", normative-optional] If the host is a web browser or otherwise supports <emu-xref href="#sec-variablestatements-in-catch-blocks" title></emu-xref>, then
+                    1. If _thisEnv_ is not the Environment Record for a |Catch| clause, set _bindingExists_ to *true*.
+                  1. Else,
+                    1. Set _bindingExists_ to *true*.
+              1. Set _thisEnv_ to _thisEnv_.[[OuterEnv]].
+            1. If _bindingExists_ is *false* and _variableEnv_ is a Global Environment Record, then
+              1. If HasLexicalDeclaration(_variableEnv_, _funcName_) is *false*, then
+                1. Let _funcDefinable_ be ? CanDeclareGlobalVar(_variableEnv_, _funcName_).
+              1. Else,
+                1. Let _funcDefinable_ be *false*.
+            1. Else,
+              1. Let _funcDefinable_ be *true*.
+            1. If _bindingExists_ is *false* and _funcDefinable_ is *true*, then
+              1. If _declaredFuncOrVariableNames_ does not contain _funcName_, then
+                1. If _variableEnv_ is a Global Environment Record, then
+                  1. Perform ? CreateGlobalVarBinding(_variableEnv_, _funcName_, *true*).
+                1. Else,
+                  1. Set _bindingExists_ to ! _variableEnv_.HasBinding(_funcName_).
+                  1. If _bindingExists_ is *false*, then
+                    1. Perform ! _variableEnv_.CreateMutableBinding(_funcName_, *true*).
+                    1. Perform ! _variableEnv_.InitializeBinding(_funcName_, *undefined*).
+                1. Append _funcName_ to _declaredFuncOrVariableNames_.
+              1. [id="step-evaldeclarationinstantiation-alt-funcdecl-eval"] When the |FunctionDeclaration| _funcDecl_ is evaluated, perform the following steps in place of the |FunctionDeclaration| Evaluation algorithm provided in <emu-xref href="#sec-function-definitions-runtime-semantics-evaluation"></emu-xref>:
+                1. Let _globalEnv_ be the running execution context's VariableEnvironment.
+                1. Let _blockEnv_ be the running execution context's LexicalEnvironment.
+                1. Let _funcObj_ be ! _blockEnv_.GetBindingValue(_funcName_, *false*).
+                1. Perform ? <emu-meta effects="user-code">_globalEnv_.SetMutableBinding(_funcName_, _funcObj_, *false*)</emu-meta>.
+                1. Return ~unused~.
+      1. [id="step-evaldeclarationinstantiation-post-validation"] NOTE: No abnormal terminations occur after this algorithm step unless _variableEnv_ is a Global Environment Record and the global object is a Proxy exotic object.
+      1. Let _lexicalDecls_ be the LexicallyScopedDeclarations of _body_.
+      1. For each element _lexicalDecl_ of _lexicalDecls_, do
+        1. NOTE: Lexically declared names are only instantiated here but not initialized.
+        1. For each element _name_ of the BoundNames of _lexicalDecl_, do
+          1. If IsConstantDeclaration of _lexicalDecl_ is *true*, then
+            1. Perform ? _lexicalEnv_.CreateImmutableBinding(_name_, *true*).
+          1. Else,
+            1. Perform ? _lexicalEnv_.CreateMutableBinding(_name_, *false*).
+      1. For each Parse Node _funcDecl_ of _funcsToInitialize_, do
+        1. Let _funcName_ be the sole element of the BoundNames of _funcDecl_.
+        1. Let _funcObj_ be InstantiateFunctionObject of _funcDecl_ with arguments _lexicalEnv_ and _privateEnv_.
+        1. If _variableEnv_ is a Global Environment Record, then
+          1. Perform ? CreateGlobalFunctionBinding(_variableEnv_, _funcName_, _funcObj_, *true*).
+        1. Else,
+          1. Let _bindingExists_ be ! _variableEnv_.HasBinding(_funcName_).
+          1. If _bindingExists_ is *false*, then
+            1. NOTE: The following invocation cannot return an abrupt completion because of the validation preceding step <emu-xref href="#step-evaldeclarationinstantiation-post-validation"></emu-xref>.
+            1. Perform ! _variableEnv_.CreateMutableBinding(_funcName_, *true*).
+            1. Perform ! _variableEnv_.InitializeBinding(_funcName_, _funcObj_).
+          1. Else,
+            1. Perform ! _variableEnv_.SetMutableBinding(_funcName_, _funcObj_, *false*).
+      1. For each String _variableName_ of _declaredVariableNames_, do
+        1. If _variableEnv_ is a Global Environment Record, then
+          1. Perform ? CreateGlobalVarBinding(_variableEnv_, _variableName_, *true*).
+        1. Else,
+          1. Let _bindingExists_ be ! _variableEnv_.HasBinding(_variableName_).
+          1. If _bindingExists_ is *false*, then
+            1. NOTE: The following invocation cannot return an abrupt completion because of the validation preceding step <emu-xref href="#step-evaldeclarationinstantiation-post-validation"></emu-xref>.
+            1. Perform ! _variableEnv_.CreateMutableBinding(_variableName_, *true*).
+            1. Perform ! _variableEnv_.InitializeBinding(_variableName_, *undefined*).
+      1. Return ~unused~.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-block-private-declarations">
+    <h1>Blocks</h1>
+
+    <emu-clause id="sec-block-private-declarations-evaluation" type="sdo">
+      <h1>Runtime Semantics: Evaluation</h1>
+      <emu-grammar>Block : `{` StatementList `}`</emu-grammar>
+      <emu-alg>
+        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _blockEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+        1. <ins>Let _oldPrivateEnv_ be the running execution context's PrivateEnvironment.</ins>
+        1. <ins>Let _privateBoundIdentifiers_ be the PrivateBoundIdentifiers of |StatementList|.</ins>
+        1. <ins>Let _blockPrivateEnv_ be NewPrivateEnvironment(_oldPrivateEnv_).</ins>
+        1. <ins>Perform AddPrivateNames(_blockPrivateEnv_, _privateBoundIdentifiers_).</ins>
+        1. <ins>Set the running execution context's PrivateEnvironment to _blockPrivateEnv_.</ins>
+        1. Perform BlockDeclarationInstantiation(|StatementList|, _blockEnv_).
+        1. Set the running execution context's LexicalEnvironment to _blockEnv_.
+        1. Let _blockValue_ be Completion(Evaluation of |StatementList|).
+        1. Set _blockValue_ to Completion(DisposeResources(_blockEnv_.[[DisposableResourceStack]], _blockValue_)).
+        1. <ins>Set the running execution context's PrivateEnvironment to _oldPrivateEnv_.</ins>
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Return ? _blockValue_.
+      </emu-alg>
+      <emu-note>
+        <p>No matter how control leaves the |Block| the LexicalEnvironment <ins>and PrivateEnvironment</ins> are always restored to their former states.</p>
+      </emu-note>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-privateenvironment-records">
+    <h1>PrivateEnvironment Records</h1>
+    <p>A <dfn id="privateenvironment-record" variants="PrivateEnvironment Records">PrivateEnvironment Record</dfn> is a specification mechanism used to track Private Names based upon the lexical nesting structure of <del>|ClassDeclaration|s and |ClassExpression|s</del><ins>scopes</ins> in ECMAScript code. They are similar to, but distinct from, Environment Records. Each PrivateEnvironment Record is associated with <del>a |ClassDeclaration| or |ClassExpression|</del><ins>some syntactic construct such as a |ClassDeclaration| or |FunctionBody|</ins>. Each time such <del>a class</del><ins>code</ins> is evaluated, a new PrivateEnvironment Record is created to record the Private Names declared by <del>that class</del><ins>that code</ins>.</p>
+    <p>Each PrivateEnvironment Record has the fields defined in <emu-xref href="#table-privateenvironment-records"></emu-xref>.</p>
+    <emu-table id="table-privateenvironment-records" caption="PrivateEnvironment Record Fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value Type</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[OuterPrivateEnvironment]]</td>
+          <td>a PrivateEnvironment Record or *null*</td>
+          <td>The PrivateEnvironment Record of the nearest containing <del>class. *null* if the class with which this PrivateEnvironment Record is associated is not contained in any other class</del><ins>private scope. *null* if the private scope with which this PrivateEnvironment Record is associated is not contained in any other private scope</ins>.</td>
+        </tr>
+        <tr>
+          <td>[[Names]]</td>
+          <td>a List of Private Names</td>
+          <td>The Private Names declared by this <del>class</del><ins>private scope</ins>.</td>
+        </tr>
+      </table>
+    </emu-table>
+
+    <emu-clause id="sec-privateenvironment-record-operations">
+      <h1>PrivateEnvironment Record Operations</h1>
+      <p>The following abstract operations are used in this specification to operate upon PrivateEnvironment Records:</p>
+
+      <emu-clause id="sec-addprivatenames" type="abstract operation">
+        <h1>
+          <ins>AddPrivateNames (
+            _privateEnv_: a PrivateEnvironment Record,
+            _descriptions_: a List of Strings,
+          ): ~unused~</ins>
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. For each String _description_ of _descriptions_, do
+            1. Let _name_ be a new Private Name whose [[Description]] is _description_.
+            1. Append _name_ to _privateEnv_.[[Names]].
+          1. Return ~unused~.
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-modified-syntax-directed-operations">
+  <h1>Modified Syntax-Directed Operations</h1>
+
+  <emu-clause id="sec-private-declarations-static-semantics-lexicallydeclarednames" type="sdo">
+    <h1>Static Semantics: LexicallyDeclaredNames ( ): a List of Strings</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-lexicallyscopeddeclarations" type="sdo">
+    <h1>Static Semantics: LexicallyScopedDeclarations ( ): a List of Parse Nodes</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-vardeclarednames" type="sdo">
+    <h1>Static Semantics: VarDeclaredNames ( ): a List of Strings</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-varscopeddeclarations" type="sdo">
+    <h1>Static Semantics: VarScopedDeclarations ( ): a List of Parse Nodes</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-toplevellexicallydeclarednames" type="sdo">
+    <h1>Static Semantics: TopLevelLexicallyDeclaredNames ( ): a List of Strings</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-toplevellexicallyscopeddeclarations" type="sdo">
+    <h1>Static Semantics: TopLevelLexicallyScopedDeclarations ( ): a List of Parse Nodes</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-toplevelvardeclarednames" type="sdo">
+    <h1>Static Semantics: TopLevelVarDeclaredNames ( ): a List of Strings</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-toplevelvarscopeddeclarations" type="sdo">
+    <h1>Static Semantics: TopLevelVarScopedDeclarations ( ): a List of Parse Nodes</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return a new empty List.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-containsusing" type="sdo">
+    <h1>Static Semantics: ContainsUsing ( ): a Boolean</h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return *false*.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-containsduplicatelabels" type="sdo">
+    <h1>
+      Static Semantics: ContainsDuplicateLabels (
+        _labelSet_: a List of Strings,
+      ): a Boolean
+    </h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return *false*.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-containsundefinedbreaktarget" type="sdo">
+    <h1>
+      Static Semantics: ContainsUndefinedBreakTarget (
+        _labelSet_: a List of Strings,
+      ): a Boolean
+    </h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return *false*.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-containsundefinedcontinuetarget" type="sdo">
+    <h1>
+      Static Semantics: ContainsUndefinedContinueTarget (
+        _iterationSet_: a List of Strings,
+        _labelSet_: a List of Strings,
+      ): a Boolean
+    </h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return *false*.</ins>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-private-declarations-static-semantics-hascallintailposition" type="sdo">
+    <h1>
+      Static Semantics: HasCallInTailPosition (
+        _call_: a |CallExpression| Parse Node, a |MemberExpression| Parse Node, or an |OptionalChain| Parse Node,
+      ): a Boolean
+    </h1>
+    <dl class="header"></dl>
+    <emu-grammar><ins>StatementListItem : PrivateDeclaration</ins></emu-grammar>
+    <emu-alg>
+      1. <ins>Return *false*.</ins>
+    </emu-alg>
+  </emu-clause>
+</emu-clause>
