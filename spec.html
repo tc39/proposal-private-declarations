@@ -274,6 +274,7 @@ contributors: Justin Ridgewell, Kevin Gibbons
         <ul>
           <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument *false* contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
           <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument *true* contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
+          <li><ins>It is a Syntax Error if any element of the OuterPrivateNamesUsedInThisClassBody of |ClassElementList| also occurs in the PrivateBoundIdentifiers of |ClassElementList|.</ins></li>
         </ul>
       </emu-clause>
 
@@ -315,6 +316,31 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-grammar>
         <emu-alg>
           1. Return a new empty List.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-static-semantics-outerprivatenamesusedinthisclassbody" type="sdo">
+        <h1><ins>Static Semantics: OuterPrivateNamesUsedInThisClassBody ( ): a List of Strings</ins></h1>
+        <dl class="header"></dl>
+        <emu-grammar>ClassElementList : ClassElementList ClassElement</emu-grammar>
+        <emu-alg>
+          1. Let _names1_ be the OuterPrivateNamesUsedInThisClassBody of |ClassElementList|.
+          1. Let _names2_ be the OuterPrivateNamesUsedInThisClassBody of |ClassElement|.
+          1. Return the list-concatenation of _names1_ and _names2_.
+        </emu-alg>
+        <emu-grammar>
+          ClassElement :
+            MethodDefinition
+            FieldDefinition `;`
+            `static` MethodDefinition
+            `static` FieldDefinition `;`
+            ClassStaticBlock
+            `;`
+        </emu-grammar>
+        <emu-alg>
+          1. If the PrivateBoundIdentifiers of this |ClassElement| is not empty, return a new empty List.
+          1. NOTE: A non-empty PrivateBoundIdentifiers implies this field is named with a non-`outer` PrivateIdentifier.
+          1. Return the PrivateNamesUsedInThisObject of this |ClassElement|.
         </emu-alg>
       </emu-clause>
 
