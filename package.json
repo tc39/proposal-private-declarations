@@ -3,7 +3,8 @@
   "name": "proposal-private-declarations",
   "description": "A proposal to allow trusted code _outside_ of the class lexical scope to access private state",
   "scripts": {
-    "build": "ecmarkup spec.emu index.html"
+    "build": "mkdir -p build && ecmarkup --lint-spec --strict --load-biblio @tc39/ecma262-biblio --verbose --assets-dir build spec.html build/index.html",
+    "format": "emu-format --write spec.html"
   },
   "homepage": "https://github.com/tc39/proposal-private-declarations#readme",
   "repository": {
@@ -12,6 +13,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "ecmarkup": "^3.11.5"
+    "@tc39/ecma262-biblio": "2.2.3126",
+    "ecmarkup": "^25.0.0"
   }
 }

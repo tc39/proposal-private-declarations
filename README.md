@@ -42,6 +42,7 @@ can allow sharing private declarations to friendly module.
 ## Champions
 
 - Justin Ridgewell ([@jridgewell](https://github.com/jridgewell/))
+- Kevin Gibbons ([@bakkot](https://github.com/bakkot/))
 
 ## Status
 
@@ -118,5 +119,29 @@ export class Templates {
 export function registerExtendedTemplate() {
   const templatesService = getService('templates');
   return templatesService.#registerTemplate(...arguments);
+}
+```
+
+### Non-class object factories
+
+Not all code wants a `class`. Sometimes you still want private fields in such cases.
+
+```js
+private #hash;
+
+export function factory(value) {
+  return Object.freeze({
+    value,
+    outer #hash: someFunction(value),
+  });
+}
+
+export function isProducedByMyFactory(value) {
+  return #hash in value;
+}
+
+export function equals(a, b) {
+  if (a.#hash !== b.#hash) return false;
+  return expensiveCompare(a.value, b.value);
 }
 ```
