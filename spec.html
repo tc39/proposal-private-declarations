@@ -162,6 +162,20 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-alg>
       </emu-clause>
 
+      <emu-clause id="sec-private-property-definition-propname" type="sdo">
+        <h1>Static Semantics: PropName ( ): a String or ~empty~</h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          <ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression
+          </ins>
+
+          <ins>ClassElementName : `outer` PrivateIdentifier</ins>
+        </emu-grammar>
+        <emu-alg>
+          1. <ins>Return ~empty~.</ins>
+        </emu-alg>
+      </emu-clause>
+
       <emu-clause id="sec-object-initializer-private-elements-propertydefinitionevaluation" type="sdo">
         <h1>
           Runtime Semantics: PropertyDefinitionEvaluation (
@@ -172,7 +186,6 @@ contributors: Justin Ridgewell, Kevin Gibbons
         <emu-grammar><ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
         <emu-alg>
           1. <ins>Let _privateEnv_ be the running execution context's PrivateEnvironment.</ins>
-          1. <ins>Assert: _privateEnv_ is not *null*.</ins>
           1. <ins>Let _privateName_ be ResolvePrivateIdentifier(_privateEnv_, the StringValue of |PrivateIdentifier|).</ins>
           1. <ins>If IsAnonymousFunctionDefinition(|AssignmentExpression|) is *true*, then</ins>
             1. <ins>Let _value_ be ? NamedEvaluation of |AssignmentExpression| with argument _privateName_.</ins>
@@ -238,32 +251,27 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-alg>
         <emu-grammar><ins>Block : `{` StatementList `}`</ins></emu-grammar>
         <emu-alg>
-          1. <ins>Let _newNames_ be a copy of _names_.</ins>
-          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |StatementList|.</ins>
+          1. <ins>Let _newNames_ be the list-concatenation of _names_ and the PrivateBoundIdentifiers of |StatementList|.</ins>
           1. <ins>Return AllPrivateIdentifiersValid of |StatementList| with argument _newNames_.</ins>
         </emu-alg>
         <emu-grammar><ins>FunctionBody : FunctionStatementList</ins></emu-grammar>
         <emu-alg>
-          1. <ins>Let _newNames_ be a copy of _names_.</ins>
-          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |FunctionStatementList|.</ins>
+          1. <ins>Let _newNames_ be the list-concatenation of _names_ and the PrivateBoundIdentifiers of |FunctionStatementList|.</ins>
           1. <ins>Return AllPrivateIdentifiersValid of |FunctionStatementList| with argument _newNames_.</ins>
         </emu-alg>
         <emu-grammar><ins>ScriptBody : StatementList</ins></emu-grammar>
         <emu-alg>
-          1. <ins>Let _newNames_ be a copy of _names_.</ins>
-          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |StatementList|.</ins>
+          1. <ins>Let _newNames_ be the list-concatenation of _names_ and the PrivateBoundIdentifiers of |StatementList|.</ins>
           1. <ins>Return AllPrivateIdentifiersValid of |StatementList| with argument _newNames_.</ins>
         </emu-alg>
         <emu-grammar><ins>ModuleBody : ModuleItemList</ins></emu-grammar>
         <emu-alg>
-          1. <ins>Let _newNames_ be a copy of _names_.</ins>
-          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |ModuleItemList|.</ins>
+          1. <ins>Let _newNames_ be the list-concatenation of _names_ and the PrivateBoundIdentifiers of |ModuleItemList|.</ins>
           1. <ins>Return AllPrivateIdentifiersValid of |ModuleItemList| with argument _newNames_.</ins>
         </emu-alg>
         <emu-grammar><ins>ClassStaticBlockBody : ClassStaticBlockStatementList</ins></emu-grammar>
         <emu-alg>
-          1. <ins>Let _newNames_ be a copy of _names_.</ins>
-          1. <ins>Set _newNames_ to the list-concatenation of _newNames_ and the PrivateBoundIdentifiers of |ClassStaticBlockStatementList|.</ins>
+          1. <ins>Let _newNames_ be the list-concatenation of _names_ and the PrivateBoundIdentifiers of |ClassStaticBlockStatementList|.</ins>
           1. <ins>Return AllPrivateIdentifiersValid of |ClassStaticBlockStatementList| with argument _newNames_.</ins>
         </emu-alg>
       </emu-clause>
@@ -412,13 +420,25 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-alg>
       </emu-clause>
 
+      <emu-clause id="sec-outer-private-element-computedpropertycontains" type="sdo">
+        <h1>
+          Static Semantics: ComputedPropertyContains (
+            _symbol_: a grammar symbol,
+          ): a Boolean
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
+        <emu-alg>
+          1. <ins>Return *false*.</ins>
+        </emu-alg>
+      </emu-clause>
+
       <emu-clause id="sec-class-definitions-outer-private-elements-evaluation" type="sdo">
         <h1>Runtime Semantics: Evaluation</h1>
         <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
         <emu-alg>
           1. <ins>Let _privateIdentifier_ be the StringValue of |PrivateIdentifier|.</ins>
           1. <ins>Let _privateEnv_ be the running execution context's PrivateEnvironment.</ins>
-          1. <ins>Assert: _privateEnv_ is not *null*.</ins>
           1. <ins>Return ResolvePrivateIdentifier(_privateEnv_, _privateIdentifier_).</ins>
         </emu-alg>
       </emu-clause>
@@ -446,8 +466,165 @@ contributors: Justin Ridgewell, Kevin Gibbons
   </emu-clause>
 </emu-clause>
 
+<emu-clause id="sec-private-environment-changes">
+  <h1>Private Environment Changes</h1>
+
+  <emu-clause id="sec-execution-contexts">
+    <h1>Execution Contexts</h1>
+    <p><dfn id="ecmascript-code-execution-context" variants="ECMAScript code execution context">ECMAScript code execution contexts</dfn> have the additional state components listed in <emu-xref href="#table-additional-state-components-for-ecmascript-code-execution-contexts"></emu-xref>.</p>
+    <emu-table id="table-additional-state-components-for-ecmascript-code-execution-contexts" caption="Additional State Components for ECMAScript Code Execution Contexts" oldids="table-23">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              Component
+            </th>
+            <th>
+              Purpose
+            </th>
+          </tr>
+        </thead>
+        <tr>
+          <td>
+            LexicalEnvironment
+          </td>
+          <td>
+            Identifies the Environment Record used to resolve identifier references made by code within this execution context.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            VariableEnvironment
+          </td>
+          <td>
+            Identifies the Environment Record that holds bindings created by |VariableStatement|s within this execution context.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            PrivateEnvironment
+          </td>
+          <td>
+            <del>Identifies the PrivateEnvironment Record that holds Private Names created by |ClassElement|s in the nearest containing class. *null* if there is no containing class.</del><ins>Identifies the PrivateEnvironment Record used to resolve private identifiers within this execution context.</ins>
+          </td>
+        </tr>
+      </table>
+    </emu-table>
+    <p>The LexicalEnvironment and VariableEnvironment components of an execution context are always Environment Records. <ins>The PrivateEnvironment component of an ECMAScript code execution context is always a PrivateEnvironment Record.</ins></p>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmascript-function-objects">
+    <h1>ECMAScript Function Objects</h1>
+    <p>The [[PrivateEnvironment]] row of <emu-xref href="#table-internal-slots-of-ecmascript-function-objects"></emu-xref> is modified as follows:</p>
+    <emu-table id="table-function-privateenvironment-slot" caption="PrivateEnvironment Internal Slot of ECMAScript Function Objects">
+      <table>
+        <thead>
+          <tr>
+            <th>Internal Slot</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[PrivateEnvironment]]</td>
+          <td>a PrivateEnvironment Record<del> or *null*</del></td>
+          <td>The PrivateEnvironment Record for Private Names that the function was closed over. <del>*null* if this function is not syntactically contained within a class. Used as the outer PrivateEnvironment for inner classes when evaluating the code of the function.</del></td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+</emu-clause>
+
 <emu-clause id="sec-modified-abstract-operations">
   <h1>Modified Abstract Operations</h1>
+
+  <emu-clause id="sec-createdynamicfunction" type="abstract operation" oldids="table-dynamic-function-sourcetext-prefixes">
+    <h1>
+      CreateDynamicFunction (
+        _ctor_: a constructor,
+        _newTarget_: a constructor or *undefined*,
+        _kind_: ~normal~, ~generator~, ~async~, or ~async-generator~,
+        _paramArgs_: a List of ECMAScript language values,
+        _bodyArg_: an ECMAScript language value,
+      ): either a normal completion containing an ECMAScript function object or a throw completion
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>_ctor_ is the constructor function that is performing this action. _newTarget_ is the constructor that `new` was initially applied to. _paramArgs_ and _bodyArg_ reflect the argument values that were passed to _ctor_.</dd>
+    </dl>
+    <emu-alg>
+      1. If _newTarget_ is *undefined*, set _newTarget_ to _ctor_.
+      1. If _kind_ is ~normal~, then
+        1. Let _prefix_ be *"function"*.
+        1. Let _exprGrammar_ be the grammar symbol |FunctionExpression|.
+        1. Let _bodyGrammar_ be the grammar symbol |FunctionBody[~Yield, ~Await]|.
+        1. Let _paramGrammar_ be the grammar symbol |FormalParameters[~Yield, ~Await]|.
+        1. Let _fallbackProto_ be *"%Function.prototype%"*.
+      1. Else if _kind_ is ~generator~, then
+        1. Let _prefix_ be *"function\*"*.
+        1. Let _exprGrammar_ be the grammar symbol |GeneratorExpression|.
+        1. Let _bodyGrammar_ be the grammar symbol |GeneratorBody|.
+        1. Let _paramGrammar_ be the grammar symbol |FormalParameters[+Yield, ~Await]|.
+        1. Let _fallbackProto_ be *"%GeneratorFunction.prototype%"*.
+      1. Else if _kind_ is ~async~, then
+        1. Let _prefix_ be *"async function"*.
+        1. Let _exprGrammar_ be the grammar symbol |AsyncFunctionExpression|.
+        1. Let _bodyGrammar_ be the grammar symbol |AsyncFunctionBody|.
+        1. Let _paramGrammar_ be the grammar symbol |FormalParameters[~Yield, +Await]|.
+        1. Let _fallbackProto_ be *"%AsyncFunction.prototype%"*.
+      1. Else,
+        1. Assert: _kind_ is ~async-generator~.
+        1. Let _prefix_ be *"async function\*"*.
+        1. Let _exprGrammar_ be the grammar symbol |AsyncGeneratorExpression|.
+        1. Let _bodyGrammar_ be the grammar symbol |AsyncGeneratorBody|.
+        1. Let _paramGrammar_ be the grammar symbol |FormalParameters[+Yield, +Await]|.
+        1. Let _fallbackProto_ be *"%AsyncGeneratorFunction.prototype%"*.
+      1. Let _argCount_ be the number of elements in _paramArgs_.
+      1. Let _paramStrings_ be a new empty List.
+      1. For each element _arg_ of _paramArgs_, do
+        1. Append ? ToString(_arg_) to _paramStrings_.
+      1. Let _bodyString_ be ? ToString(_bodyArg_).
+      1. Let _currentRealm_ be the current Realm Record.
+      1. Perform ? HostEnsureCanCompileStrings(_currentRealm_, _paramStrings_, _bodyString_, *false*).
+      1. Let _paramString_ be the empty String.
+      1. If _argCount_ > 0, then
+        1. Set _paramString_ to _paramStrings_[0].
+        1. Let _k_ be 1.
+        1. Repeat, while _k_ &lt; _argCount_,
+          1. Let _nextArgString_ be _paramStrings_[_k_].
+          1. Set _paramString_ to the string-concatenation of _paramString_, *","* (a comma), and _nextArgString_.
+          1. Set _k_ to _k_ + 1.
+      1. Let _bodyParseString_ be the string-concatenation of 0x000A (LINE FEED), _bodyString_, and 0x000A (LINE FEED).
+      1. Let _sourceString_ be the string-concatenation of _prefix_, *" anonymous("*, _paramString_, 0x000A (LINE FEED), *") {"*, _bodyParseString_, and *"}"*.
+      1. Let _sourceText_ be StringToCodePoints(_sourceString_).
+      1. Let _params_ be ParseText(_paramString_, _paramGrammar_).
+      1. If _params_ is a List of errors, throw a *SyntaxError* exception.
+      1. Let _body_ be ParseText(_bodyParseString_, _bodyGrammar_).
+      1. If _body_ is a List of errors, throw a *SyntaxError* exception.
+      1. NOTE: The parameters and body are parsed separately to ensure that each is valid alone. For example, `new Function("/*", "*/ ) {")` does not evaluate to a function.
+      1. NOTE: If this step is reached, _sourceText_ must have the syntax of _exprGrammar_ (although the reverse implication does not hold). The purpose of the next two steps is to enforce any Early Error rules which apply to _exprGrammar_ directly.
+      1. Let _expr_ be ParseText(_sourceText_, _exprGrammar_).
+      1. If _expr_ is a List of errors, throw a *SyntaxError* exception.
+      1. Let _funcProto_ be ? GetPrototypeFromConstructor(_newTarget_, _fallbackProto_).
+      1. Let _envRecord_ be _currentRealm_.[[GlobalEnv]].
+      1. Let _privateEnv_ be <del>*null*</del><ins>NewPrivateEnvironment(*null*)</ins>.
+      1. Let _func_ be OrdinaryFunctionCreate(_funcProto_, _sourceText_, _params_, _body_, ~non-lexical-this~, _envRecord_, _privateEnv_).
+      1. Perform SetFunctionName(_func_, *"anonymous"*).
+      1. If _kind_ is ~generator~, then
+        1. Let _protoProto_ be OrdinaryObjectCreate(%GeneratorPrototype%).
+        1. Perform ! DefinePropertyOrThrow(_func_, *"prototype"*, PropertyDescriptor { [[Value]]: _protoProto_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *false* }).
+      1. Else if _kind_ is ~async-generator~, then
+        1. Let _protoProto_ be OrdinaryObjectCreate(%AsyncGeneratorPrototype%).
+        1. Perform ! DefinePropertyOrThrow(_func_, *"prototype"*, PropertyDescriptor { [[Value]]: _protoProto_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *false* }).
+      1. Else if _kind_ is ~normal~, then
+        1. Perform MakeConstructor(_func_).
+      1. NOTE: Functions whose _kind_ is ~async~ are not constructable and do not have a [[Construct]] internal method or a *"prototype"* property.
+      1. Return _func_.
+    </emu-alg>
+    <emu-note>
+      <p>CreateDynamicFunction defines a *"prototype"* property on any function it creates whose _kind_ is not ~async~ to provide for the possibility that the function will be used as a constructor.</p>
+    </emu-note>
+  </emu-clause>
 
   <emu-clause id="sec-prepareforordinarycall" type="abstract operation">
     <h1>
@@ -906,14 +1083,13 @@ contributors: Justin Ridgewell, Kevin Gibbons
         _body_: a |ScriptBody| Parse Node,
         _variableEnv_: an Environment Record,
         _lexicalEnv_: a Declarative Environment Record,
-        _privateEnv_: a PrivateEnvironment Record or *null*,
+        _privateEnv_: a PrivateEnvironment Record,
         _strict_: a Boolean,
       ): either a normal completion containing ~unused~ or a throw completion
     </h1>
     <dl class="header">
     </dl>
     <emu-alg>
-      1. <ins>Assert: _privateEnv_ is not *null*.</ins>
       1. <ins>Let _privateBoundIdentifiers_ be the PrivateBoundIdentifiers of _body_.</ins>
       1. <ins>Perform AddPrivateNames(_privateEnv_, _privateBoundIdentifiers_).</ins>
       1. Let _variableNames_ be the VarDeclaredNames of _body_.
@@ -1119,6 +1295,22 @@ contributors: Justin Ridgewell, Kevin Gibbons
 
 <emu-clause id="sec-modified-syntax-directed-operations">
   <h1>Modified Syntax-Directed Operations</h1>
+
+  <emu-clause id="sec-scripts-static-semantics-early-errors">
+    <h1>Static Semantics: Early Errors</h1>
+    <emu-grammar>ScriptBody : StatementList</emu-grammar>
+    <ul>
+      <li>It is a Syntax Error if AllPrivateIdentifiersValid of <del>|StatementList|</del><ins>this |ScriptBody|</ins> with argument « » is *false* unless the source text containing |ScriptBody| is eval code that is being processed by a direct eval.</li>
+    </ul>
+  </emu-clause>
+
+  <emu-clause id="sec-module-semantics-static-semantics-early-errors">
+    <h1>Static Semantics: Early Errors</h1>
+    <emu-grammar>ModuleBody : ModuleItemList</emu-grammar>
+    <ul>
+      <li>It is a Syntax Error if AllPrivateIdentifiersValid of <del>|ModuleItemList|</del><ins>this |ModuleBody|</ins> with argument « » is *false*.</li>
+    </ul>
+  </emu-clause>
 
   <emu-clause id="sec-private-declarations-static-semantics-lexicallydeclarednames" type="sdo">
     <h1>Static Semantics: LexicallyDeclaredNames ( ): a List of Strings</h1>
