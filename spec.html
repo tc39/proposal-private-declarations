@@ -72,7 +72,7 @@ contributors: Justin Ridgewell, Kevin Gibbons
           IdentifierReference[?Yield, ?Await]
           CoverInitializedName[?Yield, ?Await]
           PropertyName[?Yield, ?Await] `:` AssignmentExpression[+In, ?Yield, ?Await]
-          <ins>`outer` [no LineTerminator here] PrivateIdentifier `:` AssignmentExpression[+In, ?Yield, ?Await]</ins>
+          <ins>PrivateIdentifier `:` AssignmentExpression[+In, ?Yield, ?Await]</ins>
           MethodDefinition[?Yield, ?Await]
           `...` AssignmentExpression[+In, ?Yield, ?Await]
       </emu-grammar>
@@ -87,60 +87,20 @@ contributors: Justin Ridgewell, Kevin Gibbons
         <ul>
           <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisObject of |PropertyDefinitionList| contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
         </ul>
+        <emu-grammar>PropertyDefinition : MethodDefinition</emu-grammar>
+        <ul>
+          <li><del>It is a Syntax Error if the PrivateBoundIdentifiers of |MethodDefinition| is not empty.</del></li>
+        </ul>
       </emu-clause>
 
       <emu-clause id="sec-static-semantics-privatenamesusedinthisobject" type="sdo">
         <h1><ins>Static Semantics: PrivateNamesUsedInThisObject ( ): a List of Strings</ins></h1>
         <dl class="header"></dl>
-        <emu-grammar>
-          ClassElementName :
-            PrivateIdentifier
-            `outer` PrivateIdentifier
-        </emu-grammar>
+        <emu-grammar>PropertyDefinition : MethodDefinition</emu-grammar>
         <emu-alg>
-          1. Return a List whose sole element is the StringValue of |PrivateIdentifier|.
+          1. Return the PrivateBoundIdentifiers of |MethodDefinition|.
         </emu-alg>
-        <emu-grammar>ClassElementName : PropertyName</emu-grammar>
-        <emu-alg>
-          1. Return a new empty List.
-        </emu-alg>
-        <emu-grammar>FieldDefinition : ClassElementName Initializer?</emu-grammar>
-        <emu-alg>
-          1. Return the PrivateNamesUsedInThisObject of |ClassElementName|.
-        </emu-alg>
-        <emu-grammar>
-          MethodDefinition :
-            ClassElementName `(` UniqueFormalParameters `)` `{` FunctionBody `}`
-            `get` ClassElementName `(` `)` `{` FunctionBody `}`
-            `set` ClassElementName `(` PropertySetParameterList `)` `{` FunctionBody `}`
-
-          GeneratorMethod :
-            `*` ClassElementName `(` UniqueFormalParameters `)` `{` GeneratorBody `}`
-
-          AsyncMethod :
-            `async` ClassElementName `(` UniqueFormalParameters `)` `{` AsyncFunctionBody `}`
-
-          AsyncGeneratorMethod :
-            `async` `*` ClassElementName `(` UniqueFormalParameters `)` `{` AsyncGeneratorBody `}`
-        </emu-grammar>
-        <emu-alg>
-          1. Return the PrivateNamesUsedInThisObject of |ClassElementName|.
-        </emu-alg>
-        <emu-grammar>
-          ClassElement :
-            ClassStaticBlock
-            `;`
-        </emu-grammar>
-        <emu-alg>
-          1. Return a new empty List.
-        </emu-alg>
-        <emu-grammar>ClassElementList : ClassElementList ClassElement</emu-grammar>
-        <emu-alg>
-          1. Let _names1_ be the PrivateNamesUsedInThisObject of |ClassElementList|.
-          1. Let _names2_ be the PrivateNamesUsedInThisObject of |ClassElement|.
-          1. Return the list-concatenation of _names1_ and _names2_.
-        </emu-alg>
-        <emu-grammar>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</emu-grammar>
+        <emu-grammar>PropertyDefinition : PrivateIdentifier `:` AssignmentExpression</emu-grammar>
         <emu-alg>
           1. Return a List whose sole element is the StringValue of |PrivateIdentifier|.
         </emu-alg>
@@ -165,12 +125,7 @@ contributors: Justin Ridgewell, Kevin Gibbons
       <emu-clause id="sec-private-property-definition-propname" type="sdo">
         <h1>Static Semantics: PropName ( ): a String or ~empty~</h1>
         <dl class="header"></dl>
-        <emu-grammar>
-          <ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression
-          </ins>
-
-          <ins>ClassElementName : `outer` PrivateIdentifier</ins>
-        </emu-grammar>
+        <emu-grammar><ins>PropertyDefinition : PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
         <emu-alg>
           1. <ins>Return ~empty~.</ins>
         </emu-alg>
@@ -183,7 +138,7 @@ contributors: Justin Ridgewell, Kevin Gibbons
           ): either a normal completion containing ~unused~ or an abrupt completion
         </h1>
         <dl class="header"></dl>
-        <emu-grammar><ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
+        <emu-grammar><ins>PropertyDefinition : PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
         <emu-alg>
           1. <ins>Let _privateEnv_ be the running execution context's PrivateEnvironment.</ins>
           1. <ins>Let _privateName_ be ResolvePrivateIdentifier(_privateEnv_, the StringValue of |PrivateIdentifier|).</ins>
@@ -222,29 +177,22 @@ contributors: Justin Ridgewell, Kevin Gibbons
   <emu-clause id="sec-private-declarations-classes">
     <h1>Classes</h1>
 
-    <emu-clause id="sec-class-definitions-outer-private-elements">
+    <emu-clause id="sec-class-definitions-private-elements">
       <h1>Class Definitions</h1>
-      <h2>Syntax</h2>
-      <emu-grammar type="definition">
-        ClassElementName[Yield, Await] :
-          PropertyName[?Yield, ?Await]
-          PrivateIdentifier
-          <ins>`outer` [no LineTerminator here] PrivateIdentifier</ins>
-      </emu-grammar>
 
-      <emu-clause id="sec-class-definitions-outer-private-elements-allprivateidentifiersvalid" type="sdo">
+      <emu-clause id="sec-class-definitions-private-elements-allprivateidentifiersvalid" type="sdo">
         <h1>
           Static Semantics: AllPrivateIdentifiersValid (
             _names_: a List of Strings,
           ): a Boolean
         </h1>
         <dl class="header"></dl>
-        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
+        <emu-grammar>ClassElementName : PrivateIdentifier</emu-grammar>
         <emu-alg>
           1. <ins>If _names_ contains the StringValue of |PrivateIdentifier|, return *true*.</ins>
           1. <ins>Return *false*.</ins>
         </emu-alg>
-        <emu-grammar><ins>PropertyDefinition : `outer` PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
+        <emu-grammar><ins>PropertyDefinition : PrivateIdentifier `:` AssignmentExpression</ins></emu-grammar>
         <emu-alg>
           1. <ins>If _names_ does not contain the StringValue of |PrivateIdentifier|, return *false*.</ins>
           1. <ins>Return AllPrivateIdentifiersValid of |AssignmentExpression| with argument _names_.</ins>
@@ -276,13 +224,13 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-class-definitions-outer-private-elements-early-errors">
+      <emu-clause id="sec-class-definitions-private-elements-early-errors">
         <h1>Static Semantics: Early Errors</h1>
         <emu-grammar>ClassBody : ClassElementList</emu-grammar>
         <ul>
+          <li><del>It is a Syntax Error if the PrivateBoundIdentifiers of |ClassElementList| contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static.</del></li>
           <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument *false* contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
           <li><ins>It is a Syntax Error if the PrivateNamesUsedInThisClassBody of |ClassElementList| with argument *true* contains any duplicate entries, unless the name is used once for a getter and once for a setter and in no other entries.</ins></li>
-          <li><ins>It is a Syntax Error if any element of the OuterPrivateNamesUsedInThisClassBody of |ClassElementList| also occurs in the PrivateBoundIdentifiers of |ClassElementList|.</ins></li>
         </ul>
       </emu-clause>
 
@@ -306,7 +254,7 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-grammar>
         <emu-alg>
           1. If _static_ is *true*, return a new empty List.
-          1. Return the PrivateNamesUsedInThisObject of this |ClassElement|.
+          1. Return the PrivateBoundIdentifiers of this |ClassElement|.
         </emu-alg>
         <emu-grammar>
           ClassElement :
@@ -315,7 +263,7 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-grammar>
         <emu-alg>
           1. If _static_ is *false*, return a new empty List.
-          1. Return the PrivateNamesUsedInThisObject of this |ClassElement|.
+          1. Return the PrivateBoundIdentifiers of this |ClassElement|.
         </emu-alg>
         <emu-grammar>
           ClassElement :
@@ -327,36 +275,13 @@ contributors: Justin Ridgewell, Kevin Gibbons
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-static-semantics-outerprivatenamesusedinthisclassbody" type="sdo">
-        <h1><ins>Static Semantics: OuterPrivateNamesUsedInThisClassBody ( ): a List of Strings</ins></h1>
-        <dl class="header"></dl>
-        <emu-grammar>ClassElementList : ClassElementList ClassElement</emu-grammar>
-        <emu-alg>
-          1. Let _names1_ be the OuterPrivateNamesUsedInThisClassBody of |ClassElementList|.
-          1. Let _names2_ be the OuterPrivateNamesUsedInThisClassBody of |ClassElement|.
-          1. Return the list-concatenation of _names1_ and _names2_.
-        </emu-alg>
-        <emu-grammar>
-          ClassElement :
-            MethodDefinition
-            FieldDefinition `;`
-            `static` MethodDefinition
-            `static` FieldDefinition `;`
-            ClassStaticBlock
-            `;`
-        </emu-grammar>
-        <emu-alg>
-          1. If the PrivateBoundIdentifiers of this |ClassElement| is not empty, return a new empty List.
-          1. NOTE: A non-empty PrivateBoundIdentifiers implies this field is named with a non-`outer` PrivateIdentifier, and therefore is not named with an `outer` PrivateIdentifier.
-          1. Return the PrivateNamesUsedInThisObject of this |ClassElement|.
-        </emu-alg>
-      </emu-clause>
-
       <emu-clause id="sec-static-semantics-privateboundidentifiers" type="sdo">
         <h1>Static Semantics: PrivateBoundIdentifiers ( ): a List of Strings</h1>
         <dl class="header"></dl>
 
-        <emu-note type="editor">Probably rename this to “CreatedPrivateNames”.</emu-note>
+        <emu-note>
+          <p>For a class, PrivateBoundIdentifiers lists the private identifiers used to name its elements, including those which reuse an enclosing binding. For a statement or module item list, it lists the explicit private declarations in that scope.</p>
+        </emu-note>
 
         <emu-grammar><ins>StatementList : StatementList StatementListItem</ins></emu-grammar>
         <emu-alg>
@@ -413,33 +338,157 @@ contributors: Justin Ridgewell, Kevin Gibbons
         <emu-alg>
           1. <ins>Return a List whose sole element is the StringValue of |PrivateIdentifier|.</ins>
         </emu-alg>
-
-        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
-        <emu-alg>
-          1. <ins>Return a new empty List.</ins>
-        </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-outer-private-element-computedpropertycontains" type="sdo">
-        <h1>
-          Static Semantics: ComputedPropertyContains (
-            _symbol_: a grammar symbol,
-          ): a Boolean
-        </h1>
-        <dl class="header"></dl>
-        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
-        <emu-alg>
-          1. <ins>Return *false*.</ins>
-        </emu-alg>
-      </emu-clause>
-
-      <emu-clause id="sec-class-definitions-outer-private-elements-evaluation" type="sdo">
+      <emu-clause id="sec-class-definitions-runtime-semantics-evaluation" type="sdo">
         <h1>Runtime Semantics: Evaluation</h1>
-        <emu-grammar><ins>ClassElementName : `outer` PrivateIdentifier</ins></emu-grammar>
+        <emu-grammar>ClassElementName : PrivateIdentifier</emu-grammar>
         <emu-alg>
-          1. <ins>Let _privateIdentifier_ be the StringValue of |PrivateIdentifier|.</ins>
-          1. <ins>Let _privateEnv_ be the running execution context's PrivateEnvironment.</ins>
-          1. <ins>Return ResolvePrivateIdentifier(_privateEnv_, _privateIdentifier_).</ins>
+          1. Let _privateIdentifier_ be the StringValue of |PrivateIdentifier|.
+          1. Let _privateEnvRecord_ be the running execution context's PrivateEnvironment.
+          1. <del>Let _names_ be _privateEnvRecord_.[[Names]].</del>
+          1. <del>Assert: Exactly one element of _names_ is a Private Name whose [[Description]] is _privateIdentifier_.</del>
+          1. <del>Let _privateName_ be the Private Name in _names_ whose [[Description]] is _privateIdentifier_.</del>
+          1. <ins>Let _privateName_ be ResolvePrivateIdentifier(_privateEnvRecord_, _privateIdentifier_).</ins>
+          1. <ins>Assert: _privateName_ is not ~empty~.</ins>
+          1. Return _privateName_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-runtime-semantics-classdefinitionevaluation" oldids="sec-default-constructor-functions" type="sdo">
+        <h1>
+          Runtime Semantics: ClassDefinitionEvaluation (
+            _classBinding_: a String or *undefined*,
+            _className_: a property key or a Private Name,
+            _sourceText_: ECMAScript source text,
+          ): either a normal completion containing a function object or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
+        <emu-note>
+          <p><ins>A class element reuses the nearest enclosing Private Name with the same description, if one exists. Otherwise, the class creates a new Private Name. Repeated uses of a description within the class resolve to the same Private Name. Explicit private declarations always create new Private Names in their own scope.</ins></p>
+        </emu-note>
+        <emu-grammar>ClassTail : ClassHeritage? `{` ClassBody? `}`</emu-grammar>
+        <emu-alg>
+          1. Let _envRecord_ be the LexicalEnvironment of the running execution context.
+          1. Let _classEnv_ be NewDeclarativeEnvironment(_envRecord_).
+          1. If _classBinding_ is not *undefined*, then
+            1. Perform ! _classEnv_.CreateImmutableBinding(_classBinding_, *true*).
+          1. Let _outerPrivateEnv_ be the running execution context's PrivateEnvironment.
+          1. Let _classPrivateEnv_ be NewPrivateEnvironment(_outerPrivateEnv_).
+          1. If |ClassBody| is present, then
+            1. For each String _description_ of the PrivateBoundIdentifiers of |ClassBody|, do
+              1. <del>If _classPrivateEnv_.[[Names]] contains a Private Name _privateName_ such that _privateName_.[[Description]] is _description_, then</del>
+                1. <del>Assert: This is only possible for getter/setter pairs.</del>
+              1. <del>Else,</del>
+                1. <del>Let _name_ be a new Private Name whose [[Description]] is _description_.</del>
+                1. <del>Append _name_ to _classPrivateEnv_.[[Names]].</del>
+              1. <ins>Let _privateName_ be ResolvePrivateIdentifier(_classPrivateEnv_, _description_).</ins>
+              1. <ins>If _privateName_ is ~empty~, then</ins>
+                1. <ins>Let _name_ be a new Private Name whose [[Description]] is _description_.</ins>
+                1. <ins>Append _name_ to _classPrivateEnv_.[[Names]].</ins>
+          1. If |ClassHeritage| is not present, then
+            1. Let _protoParent_ be %Object.prototype%.
+            1. Let _ctorParent_ be %Function.prototype%.
+          1. Else,
+            1. Set the running execution context's LexicalEnvironment to _classEnv_.
+            1. NOTE: The running execution context's PrivateEnvironment is _outerPrivateEnv_ when evaluating |ClassHeritage|.
+            1. Let _superclassRef_ be Completion(Evaluation of |ClassHeritage|).
+            1. Set the running execution context's LexicalEnvironment to _envRecord_.
+            1. Let _superclass_ be ? GetValue(? _superclassRef_).
+            1. If _superclass_ is *null*, then
+              1. Let _protoParent_ be *null*.
+              1. Let _ctorParent_ be %Function.prototype%.
+            1. Else if IsConstructor(_superclass_) is *false*, then
+              1. Throw a *TypeError* exception.
+            1. Else,
+              1. Let _protoParent_ be ? Get(_superclass_, *"prototype"*).
+              1. If _protoParent_ is not an Object and _protoParent_ is not *null*, throw a *TypeError* exception.
+              1. Let _ctorParent_ be _superclass_.
+          1. Let _proto_ be OrdinaryObjectCreate(_protoParent_).
+          1. If |ClassBody| is not present, let _ctor_ be ~empty~.
+          1. Else, let _ctor_ be the ConstructorMethod of |ClassBody|.
+          1. Set the running execution context's LexicalEnvironment to _classEnv_.
+          1. Set the running execution context's PrivateEnvironment to _classPrivateEnv_.
+          1. If _ctor_ is ~empty~, then
+            1. Let _defaultCtor_ be a new Abstract Closure with no parameters that captures nothing and performs the following steps when called:
+              1. Let _args_ be the List of arguments that was passed to this function by [[Call]] or [[Construct]].
+              1. If NewTarget is *undefined*, throw a *TypeError* exception.
+              1. Let _ctorFunc_ be the active function object.
+              1. If _ctorFunc_.[[ConstructorKind]] is ~derived~, then
+                1. NOTE: This branch behaves similarly to `constructor(...args) { super(...args); }`. The most notable distinction is that while the aforementioned ECMAScript source text observably calls the %Symbol.iterator% method on `%Array.prototype%`, this function does not.
+                1. Let _func_ be ! _ctorFunc_.[[GetPrototypeOf]]().
+                1. If IsConstructor(_func_) is *false*, throw a *TypeError* exception.
+                1. Let _result_ be ? Construct(_func_, _args_, NewTarget).
+              1. Else,
+                1. NOTE: This branch behaves similarly to `constructor() {}`.
+                1. Let _result_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%Object.prototype%"*).
+              1. Perform ? InitializeInstanceElements(_result_, _ctorFunc_).
+              1. Return NormalCompletion(_result_).
+            1. Let _ctorFunc_ be CreateBuiltinFunction(_defaultCtor_, 0, _className_, « [[ConstructorKind]], [[SourceText]], [[PrivateMethods]], [[Fields]] », the current Realm Record, _ctorParent_).
+          1. Else,
+            1. Let _ctorInfo_ be ! DefineMethod of _ctor_ with arguments _proto_ and _ctorParent_.
+            1. Let _ctorFunc_ be _ctorInfo_.[[Closure]].
+            1. Perform MakeClassConstructor(_ctorFunc_).
+            1. Perform SetFunctionName(_ctorFunc_, _className_).
+          1. Set _ctorFunc_.[[SourceText]] to _sourceText_.
+          1. Perform MakeConstructor(_ctorFunc_, *false*, _proto_).
+          1. If |ClassHeritage| is present, set _ctorFunc_.[[ConstructorKind]] to ~derived~.
+          1. Perform ! DefineMethodProperty(_proto_, *"constructor"*, _ctorFunc_, *false*).
+          1. If |ClassBody| is not present, let _classElements_ be a new empty List.
+          1. Else, let _classElements_ be the NonConstructorElements of |ClassBody|.
+          1. Let _instancePrivateMethods_ be a new empty List.
+          1. Let _staticPrivateMethods_ be a new empty List.
+          1. Let _instanceFields_ be a new empty List.
+          1. Let _staticElements_ be a new empty List.
+          1. For each |ClassElement| _classElement_ of _classElements_, do
+            1. If IsStatic of _classElement_ is *false*, then
+              1. Let _element_ be Completion(ClassElementEvaluation of _classElement_ with argument _proto_).
+            1. Else,
+              1. Let _element_ be Completion(ClassElementEvaluation of _classElement_ with argument _ctorFunc_).
+            1. If _element_ is an abrupt completion, then
+              1. Set the running execution context's LexicalEnvironment to _envRecord_.
+              1. Set the running execution context's PrivateEnvironment to _outerPrivateEnv_.
+              1. Return ? _element_.
+            1. Set _element_ to ! _element_.
+            1. If _element_ is a PrivateElement, then
+              1. Assert: _element_.[[Kind]] is either ~method~ or ~accessor~.
+              1. If IsStatic of _classElement_ is *false*, let _container_ be _instancePrivateMethods_.
+              1. Else, let _container_ be _staticPrivateMethods_.
+              1. If _container_ contains a PrivateElement _existingElement_ such that _existingElement_.[[Key]] is _element_.[[Key]], then
+                1. Assert: _element_.[[Kind]] and _existingElement_.[[Kind]] are both ~accessor~.
+                1. If _element_.[[Getter]] is *undefined*, then
+                  1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Getter]]: _existingElement_.[[Getter]], [[Setter]]: _element_.[[Setter]] }.
+                1. Else,
+                  1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Getter]]: _element_.[[Getter]], [[Setter]]: _existingElement_.[[Setter]] }.
+                1. Replace _existingElement_ in _container_ with _combined_.
+              1. Else,
+                1. Append _element_ to _container_.
+            1. Else if _element_ is a ClassFieldDefinition Record, then
+              1. If IsStatic of _classElement_ is *false*, append _element_ to _instanceFields_.
+              1. Else, append _element_ to _staticElements_.
+            1. Else if _element_ is a ClassStaticBlockDefinition Record, then
+              1. Append _element_ to _staticElements_.
+            1. Else,
+              1. Assert: _element_ is ~empty~.
+          1. Set the running execution context's LexicalEnvironment to _envRecord_.
+          1. If _classBinding_ is not *undefined*, then
+            1. Perform ! _classEnv_.InitializeBinding(_classBinding_, _ctorFunc_).
+          1. Set _ctorFunc_.[[PrivateMethods]] to _instancePrivateMethods_.
+          1. Set _ctorFunc_.[[Fields]] to _instanceFields_.
+          1. For each PrivateElement _method_ of _staticPrivateMethods_, do
+            1. Perform ! PrivateMethodOrAccessorAdd(_ctorFunc_, _method_).
+          1. For each element _elementRecord_ of _staticElements_, do
+            1. If _elementRecord_ is a ClassFieldDefinition Record, then
+              1. Let _result_ be Completion(DefineField(_ctorFunc_, _elementRecord_)).
+            1. Else,
+              1. Assert: _elementRecord_ is a ClassStaticBlockDefinition Record.
+              1. Let _result_ be Completion(Call(_elementRecord_.[[BodyFunction]], _ctorFunc_)).
+            1. If _result_ is an abrupt completion, then
+              1. Set the running execution context's PrivateEnvironment to _outerPrivateEnv_.
+              1. Return ? _result_.
+          1. Set the running execution context's PrivateEnvironment to _outerPrivateEnv_.
+          1. Return _ctorFunc_.
         </emu-alg>
       </emu-clause>
     </emu-clause>
@@ -1273,6 +1322,26 @@ contributors: Justin Ridgewell, Kevin Gibbons
     <emu-clause id="sec-privateenvironment-record-operations">
       <h1>PrivateEnvironment Record Operations</h1>
       <p>The following abstract operations are used in this specification to operate upon PrivateEnvironment Records:</p>
+
+      <emu-clause id="sec-resolve-private-identifier" type="abstract operation">
+        <h1>
+          ResolvePrivateIdentifier (
+            _privateEnv_: a PrivateEnvironment Record,
+            _identifier_: a String,
+          ): a Private Name or ~empty~
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _names_ be _privateEnv_.[[Names]].
+          1. For each Private Name _privateName_ of _names_, do
+            1. If _privateName_.[[Description]] is _identifier_, then
+              1. Return _privateName_.
+          1. Let _outerPrivateEnv_ be _privateEnv_.[[OuterPrivateEnvironment]].
+          1. <del>Assert: _outerPrivateEnv_ is not *null*.</del>
+          1. <ins>If _outerPrivateEnv_ is *null*, return ~empty~.</ins>
+          1. Return ResolvePrivateIdentifier(_outerPrivateEnv_, _identifier_).
+        </emu-alg>
+      </emu-clause>
 
       <emu-clause id="sec-addprivatenames" type="abstract operation">
         <h1>

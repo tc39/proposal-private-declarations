@@ -5,7 +5,7 @@ A proposal to add Private Declarations, allowing trusted code _outside_ of the c
 ```js
 private #hello;
 class Example {
-  outer #hello = 'world!';
+  #hello = 'world!';
 
   hello() {
     return this.#hello;
@@ -23,7 +23,7 @@ This also allows us to bring private state to regular objects!
 private #hello;
 function Example() {
   return {
-    outer #hello: 'world',
+    #hello: 'world',
 
     hello() {
       return this.#hello;
@@ -64,13 +64,13 @@ private #createPart;
 class AttributeCommitter {
   //...
 
-  outer #createPart() {
+  #createPart() {
     return new AttributePart(this);
   }
 }
 
 class PropertyCommitter extends AttributeCommitter {
-  outer #createPart() {
+  #createPart() {
     return new PropertyPart(this);
   }
 }
@@ -108,7 +108,7 @@ private #registerTemplate;
 // Exported so that it may be intalled on the global and shared
 // across split bundles.
 export class Templates {
-  outer #registerTemplate() {
+  #registerTemplate() {
     //...
   }
 }
@@ -132,7 +132,7 @@ private #hash;
 export function factory(value) {
   return Object.freeze({
     value,
-    outer #hash: someFunction(value),
+    #hash: someFunction(value),
   });
 }
 
